@@ -41,6 +41,7 @@
   pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 12em; overflow: auto; margin: 8px 0; padding: 10px 12px;
     background: #0f131a; border-radius: 10px; font: 15px/1.4 system-ui, sans-serif; color: #c7ccd6; }
   progress { width: 100%; height: 14px; accent-color: #f7931a; }
+  .address { font: 600 17px/1.4 ui-monospace, Consolas, monospace; background: #0f131a; border-radius: 10px; padding: 10px 12px; user-select: all; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -110,6 +111,15 @@
     <h2>Gesture log</h2>
     <p id="log" class="muted"></p>
     <div class="row"><a class="button" id="log-download" href="/api/log" download>Download</a><button type="button" id="log-clear">Clear</button></div>
+  </section>
+
+  <section class="card" id="donate">
+    <h2>Donate</h2>
+    <p>Free and open source. If it saved you an evening and you like what we do, send a few sats our way.
+      We take <b>Bitcoin over Lightning only</b>: no cards, no altcoins, no "exposure".</p>
+    <div class="row"><code class="address">sats4ai@blink.sv</code>
+      <a class="button" href="https://pay.blink.sv/sats4ai" target="_blank" rel="noopener noreferrer">Open the pay page</a></div>
+    <p class="muted">Wallet empty right now? That is cool too. We have been there.</p>
   </section>
 
   <section class="card">

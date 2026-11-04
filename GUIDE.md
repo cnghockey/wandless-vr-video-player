@@ -244,6 +244,8 @@ The offline copy has no folder list and no passcode. It plays only the files you
 
 ## 13. Donate
 
-Wandless is free. If you like it, send sats to the Lightning address `sats4ai@blink.sv`, or open
-<https://pay.blink.sv/sats4ai>. Any Lightning wallet can pay it. Wandless itself never asks for money and never opens
-this page.
+Did Wandless save you an evening? Then send a few sats our way. We take **Bitcoin over Lightning only**: no cards, no
+altcoins, no "exposure". The Lightning address is `sats4ai@blink.sv`, or open <https://pay.blink.sv/sats4ai>.
+The control page has the same Donate card. Wandless itself never opens the pay page: only your click does.
+
+Wallet empty right now? That is cool too. We have been there.

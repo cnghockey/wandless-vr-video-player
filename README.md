@@ -8,7 +8,7 @@ no remote, no controllers. Stream from your laptop, or play a file stored on the
 **New here? Read [GUIDE.md](GUIDE.md):** setup, folders, the headset, gestures, passthrough, airplane mode.
 This README is the technical reference.
 
-Free and open source. If you like it, [donate with Lightning](#donate).
+Free and open source. If you like it, [send a few sats over Lightning](#support--donate).
 
 ## Why Wandless
 
@@ -449,16 +449,21 @@ the Windows Firewall prompt and Task Manager say "Wandless VR Video Player" and 
 The icon is `brand/wandless-icon.svg`: two fingertips meeting in a pinch, with a spark where they touch (the magic, with no wand).
 The PNG sizes, `wandless.ico` and the banner in `brand/` are made from it. The page icon is the same SVG, inside each page.
 
-## Donate
+## Support / donate
 
-Wandless is free. If it is useful to you, send sats to this Lightning address. Any Lightning wallet can pay it:
+Pinch your fingers, pause the movie. No wand, no controllers, still magic. Making it look this easy took a lot of evenings.
 
-```
-sats4ai@blink.sv
-```
+If this was useful to you and you like what we do, consider sending a few sats our way:
 
-You can also open the pay page: <https://pay.blink.sv/sats4ai>. Wandless itself never asks for money and never opens
-this page.
+⚡ **`sats4ai@blink.sv`**
+
+(It's a **Bitcoin Lightning** address: pay it from any Lightning wallet. Looks like an email, isn't one. Lightning sats only: no on-chain, no fiat, no cards, no altcoins, no refunds on gratitude.)
+
+Or open the pay page: <https://pay.blink.sv/sats4ai>
+
+Not this time? That's cool too. We've been there. A star on the repo is a free hug.
+
+(The control page has the same Donate card. Wandless itself never opens the pay page: only your click does.)
 
 ## Made by
 

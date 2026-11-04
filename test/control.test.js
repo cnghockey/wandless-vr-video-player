@@ -132,6 +132,15 @@ test('only this laptop\'s own address gets an answer (no other name, no other po
   assert.match(page.text, /X-VR-Player/); // the page sends the header the server asks for
 });
 
+test('the page has a Donate card: Lightning only, the address, a pay link that sends no referrer, no request of its own', async () => {
+  const { text } = await call('GET', '/');
+  assert.match(text, /Bitcoin over Lightning only/);
+  assert.match(text, /sats4ai@blink\.sv/);
+  assert.match(text, /<a [^>]*href="https:\/\/pay\.blink\.sv\/sats4ai"[^>]*rel="noopener noreferrer"/);
+  // Only a click by the owner leaves this PC: nothing on the page loads or fetches that address by itself.
+  assert.doesNotMatch(text, /(fetch\(|XMLHttpRequest|<img|<script|<iframe|<link)[^\n]*pay\.blink\.sv/);
+});
+
 test('a change without the X-VR-Player header is refused and changes nothing', async () => {
   const plain = { 'Content-Type': 'text/plain' }; // what a form on another site can send
   const tries = [['/api/folders/add', { dir: other }], ['/api/passcode', { code: '1111' }], ['/api/stop', {}], ['/api/log/clear', {}],
