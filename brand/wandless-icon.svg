@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wandless: two fingertips pinching, with a spark">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <!-- two fingertips meeting in a pinch -->
+  <g fill="none" stroke="#f8fafc" stroke-width="60" stroke-linecap="round">
+    <path d="M148 410 L236 296"/>
+    <path d="M364 410 L276 296"/>
+  </g>
+  <!-- the spark where they meet: the magic with no wand -->
+  <path fill="#f7931a" d="M256 66 C262 128 284 148 346 158 C284 168 262 188 256 252 C250 188 228 168 166 158 C228 148 250 128 256 66 Z"/>
+  <circle cx="354" cy="92" r="11" fill="#f7931a"/>
+  <circle cx="168" cy="224" r="8" fill="#f7931a"/>
+</svg>

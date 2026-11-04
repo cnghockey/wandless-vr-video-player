@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wandless VR Video Player: control</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230f172a'/%3E%3Cg fill='none' stroke='%23f8fafc' stroke-width='60' stroke-linecap='round'%3E%3Cpath d='M148 410 L236 296'/%3E%3Cpath d='M364 410 L276 296'/%3E%3C/g%3E%3Cpath fill='%23f7931a' d='M256 66 C262 128 284 148 346 158 C284 168 262 188 256 252 C250 188 228 168 166 158 C228 148 250 128 256 66 Z'/%3E%3Ccircle cx='354' cy='92' r='11' fill='%23f7931a'/%3E%3Ccircle cx='168' cy='224' r='8' fill='%23f7931a'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: dark; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: #0e1116; color: #e8eaed; font: 17px/1.45 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; display: grid; gap: 18px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  h1 { margin: 0; font-size: 28px; }
+  h2 { margin: 0 0 10px; font-size: 19px; }
+  .pill { border-radius: 999px; padding: 3px 12px; font-size: 14px; font-weight: 600; background: #14532d; color: #bbf7d0; }
+  .pill.stopped { background: #3a4150; color: #e8eaed; }
+  .card { background: #151a22; border: 1px solid #2a3140; border-radius: 14px; padding: 18px 20px; }
+  .card.first { border: 2px solid #f7931a; }
+  .big { font-size: 40px; font-weight: 700; color: #f7931a; margin: 4px 0; letter-spacing: .02em; overflow-wrap: anywhere; }
+  .muted, small { color: #9aa4b5; }
+  p { margin: 6px 0; }
+  ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+  li { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: #0f131a; border-radius: 10px; padding: 10px 12px; }
+  li .what { flex: 1 1 260px; min-width: 0; }
+  li .what b, li .what small { display: block; overflow-wrap: anywhere; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  input { font: inherit; color: inherit; background: #0f131a; border: 1px solid #3a4150; border-radius: 10px; padding: 10px 12px; }
+  input[type=text] { flex: 1; min-width: 220px; }
+  input.code { width: 9em; letter-spacing: .25em; }
+  input.code::placeholder { letter-spacing: normal; }
+  button, a.button { font: inherit; border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; background: #232a36; color: #e8eaed;
+    text-decoration: none; display: inline-block; }
+  button.main { background: #f7931a; color: #111; font-weight: 700; }
+  button.danger { background: #3b1d1d; color: #fecaca; }
+  button:disabled { opacity: .5; cursor: default; }
+  .msg { min-height: 1.4em; color: #9aa4b5; }
+  .msg.bad { color: #ff8a80; }
+  .msg.good { color: #86efac; }
+  label.check { display: flex; gap: 8px; align-items: center; color: #9aa4b5; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 12em; overflow: auto; margin: 8px 0; padding: 10px 12px;
+    background: #0f131a; border-radius: 10px; font: 15px/1.4 system-ui, sans-serif; color: #c7ccd6; }
+  progress { width: 100%; height: 14px; accent-color: #f7931a; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>Wandless VR Video Player</h1><span id="state" class="pill">Running</span></header>
+
+  <section class="card first" id="setup" hidden>
+    <h2>First: choose a passcode</h2>
+    <p>The headset asks for it before it shows your videos. Digits only, at least 4.</p>
+    <form class="row" data-passcode>
+      <input class="code" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Passcode" required>
+      <input class="code" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Again" required>
+      <button class="main" type="submit">Save the passcode</button>
+    </form>
+    <p class="msg" data-msg></p>
+  </section>
+
+  <section class="card first" id="update" hidden>
+    <h2 id="update-title"></h2>
+    <p id="update-text"></p>
+    <pre id="update-notes" hidden></pre>
+    <progress id="update-progress" max="1" value="0" hidden></progress>
+    <div class="row">
+      <button class="main" id="update-now" type="button">Update now</button>
+      <a class="button" id="update-page" target="_blank" rel="noopener noreferrer">What changed</a>
+    </div>
+    <p class="msg bad" id="update-error"></p>
+  </section>
+
+  <section class="card">
+    <h2>On the headset</h2>
+    <p>Type this in the Meta Quest Browser, then bookmark the page:</p>
+    <div id="addresses"><p class="big">...</p></div>
+    <p class="muted">The first time, the browser warns about the certificate. Tap Advanced, then Proceed.</p>
+    <p id="headsets" class="muted">No headset yet.</p>
+  </section>
+
+  <section class="card">
+    <h2>Video folders</h2>
+    <ul id="folders"><li class="muted">Loading...</li></ul>
+    <div class="row"><button class="main" id="pick" type="button">Add a folder...</button><span class="muted">It opens the folder window on this laptop.</span></div>
+    <form class="row" id="add-path"><input type="text" id="path" placeholder="Or paste a folder path, for example D:\Videos"><button type="submit">Add</button></form>
+    <p class="msg" id="folder-msg"></p>
+  </section>
+
+  <section class="card" id="passcode-card" hidden>
+    <h2>Passcode</h2>
+    <p id="kind" class="muted"></p>
+    <div id="change">
+      <form class="row" data-passcode>
+        <input class="code" type="password" inputmode="numeric" autocomplete="new-password" placeholder="New" required>
+        <input class="code" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Again" required>
+        <button type="submit">Change</button>
+      </form>
+      <label class="check"><input type="checkbox" id="letters"> Use a password with letters instead (a full keyboard on the headset)</label>
+      <p class="msg" data-msg></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Background work</h2>
+    <p id="previews"></p>
+    <p id="formats"></p>
+  </section>
+
+  <section class="card">
+    <h2>Gesture log</h2>
+    <p id="log" class="muted"></p>
+    <div class="row"><a class="button" id="log-download" href="/api/log" download>Download</a><button type="button" id="log-clear">Clear</button></div>
+  </section>
+
+  <section class="card">
+    <div class="row"><span id="about" class="muted"></span><button type="button" id="update-check" hidden>Check for updates</button></div>
+    <div class="row"><button class="danger" id="stop" type="button">Stop Wandless</button><span class="muted">Or close its window.</span></div>
+  </section>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  // Every change sends the X-VR-Player header: the server refuses a change without it.
+  async function api(path, body) {
+    const init = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-VR-Player': '1' }, body: JSON.stringify(body) };
+    const res = await fetch(path, init);
+    return { ok: res.ok, data: await res.json().catch(() => ({})) };
+  }
+  const say = (el, text, kind = '') => { el.textContent = text; el.className = `msg ${kind}`; };
+  const kb = (n) => (n < 1024 ? `${n} bytes` : `${Math.round(n / 1024)} KB`);
+  const mb = (n) => `${Math.round(n / 1048576)} MB`;
+  const BUSY = ['checking', 'downloading', 'testing', 'restarting'];
+  let firstVersion = null; // the version this page first saw: a later, other one means an update came in
+  let seenVersion = null;
+  let fast = null; // quick status checks while an update runs
+
+  // lib/update.js: { version, state, error, progress, latest: { version, notes, page, size }, canInstall }
+  function showUpdate(u) {
+    if (!u) return;
+    firstVersion = firstVersion || u.version;
+    const l = u.latest;
+    const about = {
+      off: '', waiting: '', checking: ' · checking for updates...', latest: ' · the latest version',
+      unknown: ' · could not check for updates. Is the PC online?',
+    }[u.state];
+    $('about').textContent = u.version !== firstVersion ? `Wandless ${u.version} · updated from ${firstVersion}.` : `Wandless ${u.version}${about || ''}`;
+    $('update-check').hidden = !['latest', 'unknown'].includes(u.state);
+    const card = ['available', 'downloading', 'testing', 'restarting'].includes(u.state) && l;
+    $('update').hidden = !card;
+    if (card) {
+      const p = u.progress;
+      $('update-title').textContent = u.state === 'available' ? `Version ${l.version} is out` : `Updating to version ${l.version}`;
+      $('update-text').textContent = {
+        available: !u.canInstall ? `You have ${u.version}. This copy runs from the source folder: update it with Git, then start it again.`
+          : `You have ${u.version}. Wandless downloads the new version${l.size ? ` (${mb(l.size)})` : ''}, checks that it starts on this PC, `
+            + 'then restarts in a new window. Your folders, passcode and previews stay.',
+        downloading: p ? `Downloading: ${mb(p.done)} of ${mb(p.total)}...` : 'Downloading...',
+        testing: 'Checking that the new version starts on this PC...',
+        restarting: 'Wandless restarts in a new window. This page comes back by itself.',
+      }[u.state];
+      $('update-notes').textContent = l.notes || '';
+      $('update-notes').hidden = u.state !== 'available' || !l.notes;
+      $('update-progress').hidden = u.state !== 'downloading' || !p;
+      if (p) $('update-progress').value = p.total ? p.done / p.total : 0;
+      $('update-now').hidden = u.state !== 'available' || !u.canInstall || !l.size;
+      $('update-now').disabled = false;
+      $('update-page').hidden = !(l.page && l.page.startsWith('https://github.com/'));
+      if (!$('update-page').hidden) $('update-page').href = l.page;
+    }
+    $('about').title = u.state === 'unknown' ? u.error : '';
+    $('update-error').textContent = u.state === 'unknown' ? '' : u.error;
+    if (!BUSY.includes(u.state) && fast) {
+      clearInterval(fast);
+      fast = null;
+    }
+  }
+
+  function showStatus(s) {
+    const pc = s.passcode;
+    $('setup').hidden = pc.set || pc.off;
+    $('passcode-card').hidden = !pc.set && !pc.off;
+    $('change').hidden = !!pc.off;
+    $('kind').textContent = pc.off ? 'The passcode is off (Wandless started with --no-password). Anyone on this Wi-Fi can open your library.'
+      : pc.kind === 'password' ? 'A password with letters is on: the headset shows a full keyboard.'
+        : 'A passcode is on: the headset shows a number keypad.';
+    $('addresses').replaceChildren(...(s.addresses.length ? s.addresses : ['No network found']).map((text) => {
+      const p = document.createElement('p');
+      p.className = 'big';
+      p.textContent = text;
+      return p;
+    }));
+    $('headsets').textContent = s.headsets.length
+      ? `Headset connected: ${s.headsets.map((h) => `${h.ip} (${h.secondsAgo < 60 ? 'just now' : `${Math.round(h.secondsAgo / 60)} min ago`})`).join(', ')}`
+      : 'No headset yet.';
+    const pv = s.previews;
+    $('previews').textContent = pv.state === 'off' ? 'Previews: off. ffmpeg was not found on this laptop.'
+      : pv.state === 'ready' ? `Previews: ${pv.done} of ${pv.total} ready (first folder; others when you open them).`
+        : pv.state === 'making' ? `Previews: making ${pv.done} of ${pv.total}...` : 'Previews: made when the headset opens a folder.';
+    const fm = s.formats;
+    $('formats').textContent = fm.state === 'off' ? 'Video formats: not checked (ffmpeg was not found).'
+      : fm.state === 'ready' ? `Video formats: ${fm.done} checked, ${fm.alpha} passthrough (a mask or a filled background).`
+        : fm.state === 'checking' ? `Video formats: checking ${fm.done} of ${fm.total}...` : 'Video formats: checked after the previews, or when the headset picks a video.';
+    $('log').textContent = s.log.bytes ? `${kb(s.log.bytes)} of gesture notes, kept on this laptop. No video names.` : 'Empty.';
+    $('log-download').hidden = !s.log.bytes;
+    $('log-clear').hidden = !s.log.bytes;
+    const updated = s.update && seenVersion && s.update.version !== seenVersion; // a new copy answers now
+    if (s.update) seenVersion = s.update.version;
+    showUpdate(s.update);
+    if (updated) loadFolders();
+  }
+
+  async function loadStatus() {
+    try {
+      const { data } = await api('/api/status');
+      showStatus(data);
+      $('state').textContent = 'Running';
+      $('state').className = 'pill';
+    } catch {
+      $('state').textContent = 'Stopped';
+      $('state').className = 'pill stopped';
+    }
+  }
+
+  async function loadFolders() {
+    const { data } = await api('/api/folders');
+    const list = $('folders');
+    list.replaceChildren();
+    for (const f of data.folders || []) {
+      const li = document.createElement('li');
+      const what = document.createElement('div');
+      what.className = 'what';
+      const name = document.createElement('b');
+      name.textContent = f.label;
+      const where = document.createElement('small');
+      where.textContent = `${f.dir} - ${f.found ? `${f.videos} video${f.videos === 1 ? '' : 's'}` : 'not found (a drive not plugged in?)'}`;
+      what.append(name, where);
+      li.appendChild(what);
+      if (f.removable) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = 'Remove';
+        b.addEventListener('click', async () => {
+          if (!confirm(`Remove ${f.dir} from Wandless? The videos stay on the laptop.`)) return;
+          const r = await api('/api/folders/remove', { dir: f.dir });
+          say($('folder-msg'), r.ok ? 'Removed. Reload the page on the headset.' : r.data.error, r.ok ? 'good' : 'bad');
+          loadFolders();
+        });
+        li.appendChild(b);
+      } else {
+        const note = document.createElement('small');
+        note.textContent = 'set when Wandless starts';
+        li.appendChild(note);
+      }
+      list.appendChild(li);
+    }
+    if (!list.children.length) list.textContent = 'No folder yet. Add one below.';
+  }
+
+  async function addFolder(path, body) {
+    const msg = $('folder-msg');
+    const r = await api(path, body);
+    if (r.data.cancelled) say(msg, 'No folder added.');
+    else if (!r.ok) say(msg, r.data.error, 'bad');
+    else say(msg, r.data.result === 'added' ? `Added ${r.data.dir}. Reload the page on the headset.` : `Already in the list: ${r.data.dir}`, 'good');
+    loadFolders();
+  }
+
+  $('pick').addEventListener('click', async () => {
+    $('pick').disabled = true;
+    say($('folder-msg'), 'Pick a folder in the window that opened on this laptop...');
+    try {
+      await addFolder('/api/folders/pick', {});
+    } finally {
+      $('pick').disabled = false;
+    }
+  });
+  $('add-path').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const dir = $('path').value.trim();
+    if (dir) addFolder('/api/folders/add', { dir }).then(() => { $('path').value = ''; });
+  });
+
+  for (const form of document.querySelectorAll('[data-passcode]')) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = form.parentElement.querySelector('[data-msg]');
+      const [a, b] = form.querySelectorAll('input');
+      const kind = form.closest('#setup') || !$('letters').checked ? 'passcode' : 'password';
+      if (a.value !== b.value) return say(msg, 'The two differ. Type the same twice.', 'bad');
+      if (kind === 'passcode' && !/^[0-9]{4,}$/.test(a.value)) return say(msg, 'Use digits only, at least 4.', 'bad');
+      const r = await api('/api/passcode', { code: a.value, kind });
+      if (!r.ok) return say(msg, r.data.error, 'bad');
+      a.value = '';
+      b.value = '';
+      say(msg, `Saved. The headset asks for the new ${kind} now.`, 'good');
+      loadStatus();
+    });
+  }
+  $('letters').addEventListener('change', () => {
+    for (const input of $('passcode-card').querySelectorAll('input.code')) input.setAttribute('inputmode', $('letters').checked ? 'text' : 'numeric');
+  });
+
+  $('update-now').addEventListener('click', async () => {
+    if (!confirm('Update now? Wandless restarts: a video that plays on the headset stops.')) return;
+    $('update-now').disabled = true;
+    const r = await api('/api/update/apply', {});
+    if (!r.ok) {
+      $('update-now').disabled = false;
+      return say($('update-error'), r.data.error || 'The update could not start.', 'bad');
+    }
+    fast = fast || setInterval(loadStatus, 1000);
+    loadStatus();
+  });
+  $('update-check').addEventListener('click', async () => {
+    $('update-check').disabled = true;
+    $('about').textContent = 'Checking for updates...';
+    const r = await api('/api/update/check', {});
+    $('update-check').disabled = false;
+    showUpdate(r.data);
+  });
+
+  $('log-clear').addEventListener('click', async () => {
+    if (!confirm('Clear the gesture log?')) return;
+    await api('/api/log/clear', {});
+    loadStatus();
+  });
+  $('stop').addEventListener('click', async () => {
+    if (!confirm('Stop Wandless? The headset loses the library until you start it again.')) return;
+    await api('/api/stop', {});
+    $('state').textContent = 'Stopped';
+    $('state').className = 'pill stopped';
+    document.querySelector('main').insertAdjacentHTML('beforeend', '<section class="card"><p>Wandless stopped. Start it again with the Wandless shortcut.</p></section>');
+  });
+
+  loadStatus();
+  loadFolders();
+  setInterval(loadStatus, 4000);
+</script>
+</body>
+</html>

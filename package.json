@@ -1,0 +1,24 @@
+{
+  "name": "wandless",
+  "version": "0.1.0",
+  "description": "Wandless VR Video Player: a remote-free video player for Meta Quest. Total control with your hands alone. VR180 and flat video, laptop streaming or headset-local files.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/build.mjs && node server.js",
+    "start:open": "node scripts/build.mjs && node server.js --no-password",
+    "set-password": "node set-password.js",
+    "package": "node scripts/package.mjs",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "MIT",
+  "repository": "https://github.com/cnghockey/wandless-vr-video-player",
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "resedit": "3.0.2"
+  }
+}

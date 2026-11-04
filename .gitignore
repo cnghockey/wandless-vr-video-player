@@ -1,0 +1,7 @@
+node_modules/
+.state/
+dist/
+release/
+.tools/
+# your own video folder paths: add-folder.cmd makes this file
+folders.txt
