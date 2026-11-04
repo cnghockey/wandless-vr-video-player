@@ -8,6 +8,8 @@ no remote, no controllers. Stream from your laptop, or play a file stored on the
 **New here? Read [GUIDE.md](GUIDE.md):** setup, folders, the headset, gestures, passthrough, airplane mode.
 This README is the technical reference.
 
+Free and open source. If you like it, [donate with Lightning](#donate).
+
 ## Why Wandless
 
 - **Remote-free: your hands are the whole remote.** Pinch with two hands to zoom a VR180 picture, pinch with one hand to turn it or to
@@ -446,6 +448,17 @@ the Windows Firewall prompt and Task Manager say "Wandless VR Video Player" and 
 
 The icon is `brand/wandless-icon.svg`: two fingertips meeting in a pinch, with a spark where they touch (the magic, with no wand).
 The PNG sizes, `wandless.ico` and the banner in `brand/` are made from it. The page icon is the same SVG, inside each page.
+
+## Donate
+
+Wandless is free. If it is useful to you, send sats to this Lightning address. Any Lightning wallet can pay it:
+
+```
+sats4ai@blink.sv
+```
+
+You can also open the pay page: <https://pay.blink.sv/sats4ai>. Wandless itself never asks for money and never opens
+this page.
 
 ## Made by
 

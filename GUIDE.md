@@ -241,3 +241,9 @@ The offline copy has no folder list and no passcode. It plays only the files you
   there is a new version. GitHub sees your internet address. Nothing else is sent.
 - Wandless keeps a small gesture log on the PC (`.state\session-log.jsonl` in the Wandless folder): how the menu opened and closed, swipes,
   pinches. It holds no video names. It helps to tune the gestures. Download or clear it on the control page.
+
+## 13. Donate
+
+Wandless is free. If you like it, send sats to the Lightning address `sats4ai@blink.sv`, or open
+<https://pay.blink.sv/sats4ai>. Any Lightning wallet can pay it. Wandless itself never asks for money and never opens
+this page.
