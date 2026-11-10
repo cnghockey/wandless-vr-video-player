@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Vector3 } from 'three';
 import {
@@ -7,7 +7,7 @@ import {
   seekFraction, formatTime, STEREOS, describeInputs, aimAngles, dragAngles,
   inGestureZone, LOW_VIEW_ANGLE, SwipeDetector, SKIP_SECONDS, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
   PANEL_IDLE_MS, placeInView, listFolder, parentDir, fisheye, packedAlphaAt, FISHEYE_FOV, PROJECTIONS, HandsTogether,
-  PRAYER_LOW_ANGLE,
+  PRAYER_LOW_ANGLE, awayStep, isAway, AwayGuard, AWAY_END_MS,
 } from '../public/core.js';
 
 const near = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} is not near ${b}`);
@@ -814,4 +814,112 @@ test('formatTime', () => {
   assert.equal(formatTime(75), '1:15');
   assert.equal(formatTime(3725), '1:02:05');
   assert.equal(formatTime(NaN), '0:00');
+});
+
+test('awayStep: the video pauses behind the Meta menu and plays again when you are back, only if it was playing', () => {
+  // you open the menu while it plays: pause, and remember that this step paused it
+  let s = awayStep('visible-blurred', { paused: false, away: false });
+  assert.deepEqual(s, { pause: true, play: false, away: true });
+  // the menu closes: play again, and forget
+  s = awayStep('visible', { paused: true, away: s.away });
+  assert.deepEqual(s, { pause: false, play: true, away: false });
+
+  // menu, then you leave, then you come back: the second step must not lose the memory (it is paused by then)
+  s = awayStep('visible-blurred', { paused: false, away: false });
+  s = awayStep('hidden', { paused: true, away: s.away });
+  assert.deepEqual(s, { pause: false, play: false, away: true });
+  s = awayStep('visible', { paused: true, away: s.away });
+  assert.equal(s.play, true);
+
+  // a video you paused yourself stays paused: nothing to pause, nothing to resume
+  s = awayStep('hidden', { paused: true, away: false });
+  assert.deepEqual(s, { pause: false, play: false, away: false });
+  s = awayStep('visible', { paused: true, away: s.away });
+  assert.deepEqual(s, { pause: false, play: false, away: false });
+
+  // "visible" with nothing paused by us does nothing, and an unknown word counts as visible
+  assert.deepEqual(awayStep('visible', { paused: false, away: false }), { pause: false, play: false, away: false });
+  assert.deepEqual(awayStep(undefined, { paused: false, away: false }), { pause: false, play: false, away: false });
+});
+
+// A fake video and a fake session end, so the real AwayGuard code runs with fake time (60 s costs no time).
+function awayRig(paused = false) {
+  const media = {
+    paused,
+    plays: 0,
+    pause() { this.paused = true; },
+    play() { this.paused = false; this.plays += 1; return Promise.resolve(); },
+  };
+  const events = [];
+  let ended = 0;
+  const guard = new AwayGuard({ media, endSession: () => { ended += 1; }, log: (type) => events.push(type) });
+  return { media, guard, events, ended: () => ended };
+}
+
+test('AwayGuard: back in focus within 60 s, the video plays again and the session stays', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const r = awayRig();
+    r.guard.change('visible-blurred');
+    assert.equal(r.media.paused, true);
+    mock.timers.tick(AWAY_END_MS - 1000);
+    r.guard.change('visible');
+    assert.equal(r.media.paused, false);
+    mock.timers.tick(10 * AWAY_END_MS);
+    assert.equal(r.ended(), 0, 'coming back cancels the end');
+  } finally { mock.timers.reset(); }
+});
+
+test('AwayGuard: still out of focus after 60 s (the grey menu that never goes), the session ends once', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const r = awayRig();
+    r.guard.change('visible-blurred');
+    mock.timers.tick(AWAY_END_MS - 1);
+    assert.equal(r.ended(), 0, 'not yet');
+    mock.timers.tick(1);
+    assert.equal(r.ended(), 1);
+    assert.deepEqual(r.events, ['away-end']);
+    mock.timers.tick(10 * AWAY_END_MS);
+    assert.equal(r.ended(), 1, 'only once');
+  } finally { mock.timers.reset(); }
+});
+
+test('AwayGuard: menu, then hidden, does not restart the 60 s; a video you paused stays paused but the session still ends', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const r = awayRig(true); // paused by the user before
+    r.guard.change('visible-blurred');
+    mock.timers.tick(40_000);
+    r.guard.change('hidden');
+    mock.timers.tick(20_000);
+    assert.equal(r.ended(), 1, 'the clock runs from the first change');
+    assert.equal(r.media.plays, 0, 'a video paused by the user is never started');
+  } finally { mock.timers.reset(); }
+});
+
+test('AwayGuard: reset (a session starts or ends) cancels the end and the resume', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const r = awayRig();
+    r.guard.change('hidden');
+    r.guard.reset();
+    mock.timers.tick(10 * AWAY_END_MS);
+    assert.equal(r.ended(), 0);
+    r.guard.change('visible');
+    assert.equal(r.media.plays, 0, 'after reset nothing resumes by itself');
+  } finally { mock.timers.reset(); }
+});
+
+test('AwayGuard: a failed resume is logged, not thrown; isAway only knows the two away words', async () => {
+  const r = awayRig();
+  r.media.play = () => Promise.reject(new Error('blocked'));
+  r.guard.change('hidden');
+  r.guard.change('visible');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(r.events.includes('resume-failed'));
+  r.guard.reset();
+  assert.equal(isAway('visible'), false);
+  assert.equal(isAway(undefined), false);
+  assert.equal(isAway('hidden') && isAway('visible-blurred'), true);
 });

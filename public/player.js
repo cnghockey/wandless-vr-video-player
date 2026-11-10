@@ -8,7 +8,7 @@ import {
   dragAngles, inGestureZone, SwipeDetector, SKIP_SECONDS, DoublePinch, HandsTogether, PRAYER_LOW_ANGLE, SEE_THROUGH, listFolder, parentDir,
   SPEED_PRESETS, SPEED_MIN, SPEED_MAX, clampSpeed, stepSpeed, formatSpeed, compareBy, formatSize, cueText, wrapLines, decodeText,
   parseSubtitles, describeSubtitle, audioLabel, numberSameLabels, orderByLanguage, pickSubtitle, baseLanguage, syncAudio,
-  readFrames, keyCbCr, CUT_WIDTH, colourName, subtitleTag,
+  readFrames, keyCbCr, CUT_WIDTH, colourName, subtitleTag, AwayGuard,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1097,7 +1097,25 @@ function frame(time) {
 renderer.setAnimationLoop(frame);
 
 let sessionStartedAt = 0;
+
+// You open the Meta menu, or leave to change the Wi-Fi: the video pauses, and plays again when you are back.
+// The headset does not stop it: the sound would run on behind the menu. Away for 60 s: the session ends (see AwayGuard).
+const away = new AwayGuard({
+  media: video,
+  endSession: () => {
+    const open = renderer.xr.getSession();
+    if (open) open.end().catch(() => {});
+  },
+  log: (type, data) => logEvent(type, data),
+});
+
 renderer.xr.addEventListener('sessionstart', () => {
+  away.reset();
+  const session = renderer.xr.getSession();
+  session.addEventListener('visibilitychange', () => {
+    logEvent('visibility', { state: session.visibilityState, page: document.visibilityState });
+    away.change(session.visibilityState);
+  });
   const blend = renderer.xr.getEnvironmentBlendMode();
   state.passthrough = !!blend && blend !== 'opaque'; // an immersive-ar session: the real room can show
   state.roomOn = true; // and it starts with the room showing
@@ -1118,6 +1136,7 @@ renderer.xr.addEventListener('sessionstart', () => {
 });
 renderer.xr.addEventListener('sessionend', () => {
   video.pause();
+  away.reset();
   state.passthrough = false;
   applyRoom();
   panelState.shown = false;
@@ -1761,6 +1780,10 @@ else if (!navigator.xr) showStatus('This browser has no WebXR. Use the Meta Ques
 async function startSession(mode) {
   showError('');
   try {
+    // A session the headset still holds from before (you left with the Meta menu) is ended first. The headset
+    // allows one session at a time, so a left-over one could keep you from the full picture.
+    const stale = renderer.xr.getSession();
+    if (stale) await stale.end().catch(() => {});
     const session = await navigator.xr.requestSession(mode, {
       optionalFeatures: ['local-floor', 'bounded-floor', 'layers', 'hand-tracking'],
     });

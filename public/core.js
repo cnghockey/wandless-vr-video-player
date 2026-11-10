@@ -545,6 +545,57 @@ export function describeInputs(session) {
   return `hand-tracking ${hand} | inputs: ${kinds.length ? kinds.join(',') : 'none'}`;
 }
 
+// The headset tells the page when you are not looking: the Meta menu is open ("visible-blurred"), or you left ("hidden").
+// The video must not play on behind the menu. It pauses then, and plays again when you are back ("visible"), but only
+// if it was playing when you left: a video you paused yourself stays paused.
+// away: true when an earlier step paused the video. Pass back what this step returns.
+export const isAway = (visibility) => visibility === 'visible-blurred' || visibility === 'hidden';
+export function awayStep(visibility, { paused, away }) {
+  if (!isAway(visibility)) return { pause: false, play: !!away, away: false };
+  return { pause: !paused, play: false, away: !!away || !paused };
+}
+
+// A report of 2026-11-09 (Quest 3S): the Meta menu was opened, the Wi-Fi changed, Done pressed, and the picture stayed
+// grey behind the menu bar. Nothing brought it back. Only a restart of the headset did. The page cannot close the
+// headset's menu. It can end its own session, so the headset shows the Browser again and "Watch in VR" is one tap away.
+// After 60 s out of focus (menu or hidden) the session ends. Back in focus before that: nothing ends.
+export const AWAY_END_MS = 60_000;
+
+// media: the video (paused, pause(), play()). endSession: ends the VR session. log(type, data): optional.
+export class AwayGuard {
+  constructor({ media, endSession, log = () => {}, endAfterMs = AWAY_END_MS }) {
+    Object.assign(this, { media, endSession, log, endAfterMs, paused: false, timer: null });
+  }
+
+  // The headset reported a new visibility state.
+  change(visibility) {
+    const step = awayStep(visibility, { paused: this.media.paused, away: this.paused });
+    this.paused = step.away;
+    if (step.pause) this.media.pause();
+    if (step.play) Promise.resolve(this.media.play()).catch((err) => this.log('resume-failed', { message: err.message }));
+    if (!isAway(visibility)) return this.stopTimer();
+    // The clock starts when you first leave. A change from menu to hidden does not restart it.
+    if (!this.timer) {
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        this.log('away-end', { seconds: this.endAfterMs / 1000 });
+        this.endSession();
+      }, this.endAfterMs);
+    }
+  }
+
+  // A session starts or ends: forget everything, so nothing plays or ends later by itself.
+  reset() {
+    this.paused = false;
+    this.stopTimer();
+  }
+
+  stopTimer() {
+    clearTimeout(this.timer);
+    this.timer = null;
+  }
+}
+
 // ---------------------------------------------------------------- panel reveal and VR180 turn
 
 export const PANEL_LOOK_AWAY = 0.6; // radians, about 35 degrees between your line of sight and the panel

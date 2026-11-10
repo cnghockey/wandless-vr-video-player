@@ -125,6 +125,9 @@ of the picture. They look like smooth, see-through hands and glow orange while t
 | Resize the screen (flat) | Pinch with both hands. Move them apart or together. |
 | Stop and pick another video | Press **Home** on the menu. |
 
+**The Meta menu:** when you open it (for example, to change the Wi-Fi), the video pauses. Close it and the video
+plays again.
+
 **The menu** shows by itself for 5 s when you start VR, the first 3 times only. After that, double pinch to open it.
 It opens on its main page:
 1. Home, -10 s, Play or Pause, +10 s, X.
@@ -221,6 +224,7 @@ The offline copy has no folder list and no passcode. It plays only the files you
 | The folder window does not show | Look in the taskbar for it. Or paste the folder path instead. |
 | Hands do nothing in VR | Use the **Meta Quest Browser**. Tap the icon at the left of the address bar, set Hand tracking to **Allow**, and reload. |
 | The menu does not open | Raise your hand into your view and double pinch quickly. |
+| The picture stays grey behind the Meta menu | Wait one minute. Wandless then leaves VR by itself and the Browser shows the video's page. Press **Watch in VR**: the video goes on where it was. |
 | A video does not play | MP4 with H.264, H.265 or AV1 video and AAC sound works best. AC3 and EAC3 sound work too. MKV files are not proven on the Quest yet. DTS sound does not play: choose another audio track, or convert the file. |
 | The picture looks wrong | Change the picture settings on the video's page, or on the **View** page of the menu in VR. |
 | A passthrough video shows red corners | Choose **VR180 fisheye** and tick the passthrough box. |

@@ -266,6 +266,18 @@ It is about 32 by 13 degrees of your view (round 6: 38 by 30), 60 cm away and a 
 **Speed.** − and + step by 0.05 (1.6× to 1.65×) from 0.5× to 3×. The presets stop at 2×. The page has the same
 controls. The speed stays for the next video (`localStorage`, on the headset only).
 
+**The Meta menu while a video plays.** Open the Meta menu (for example, to change the Wi-Fi) and the video pauses.
+Close the menu and it plays again. A video you paused yourself stays paused. Up to 0.1.1 the video played on behind
+the menu, and on a Quest 3S the picture once stayed grey behind the menu bar after a visit to Settings: only a
+restart of the headset brought it back.
+- The headset tells the page when the picture loses focus (`visibilitychange` on the session). In the headset log
+  of 2026-11-10 the Quest reported `visible-blurred` when the menu opened, then `hidden`, `visible-blurred` and
+  `visible` within one second when it closed. The picture came back both times.
+- **If the picture stays out of focus for 60 s, Wandless ends VR.** The Browser then shows the video's page, and
+  **Watch in VR** brings the picture back at the same place. This 60 s rule has not had to act on a headset yet.
+- **Watch in VR** first ends a session that the page still holds, because the headset allows one at a time.
+- `AwayGuard` in `public/core.js` has the rules; `test/core.test.js` runs them with a clock it controls.
+
 **Gesture numbers.** Tick "Show gesture numbers in VR" on the page before you go in. A small plane under the panel then
 shows: joints per hand, the thumb-to-index gap and `on` / `off` (in your view, or ignored); whether hand tracking is ON, the
 kinds of input and what each pointer ray is aiming at; and the peak distance and speed of each hand's last swipe.
