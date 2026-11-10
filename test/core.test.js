@@ -5,7 +5,7 @@ import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, clampZoom, ZOOM_MIN, ZOOM_MAX,
   GestureTracker, remoteGrab, PokeDetector, panelLayout, PANEL_W, PANEL_H, LIST_SLOTS, SPEED_PRESETS, buttonAt,
   seekFraction, formatTime, STEREOS, describeInputs, aimAngles, dragAngles,
-  inGestureZone, LOW_VIEW_ANGLE, SwipeDetector, SKIP_SECONDS, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
+  inGestureZone, LOW_VIEW_ANGLE, SwipeDetector, flickSeconds, skipLabel, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
   PANEL_IDLE_MS, placeInView, listFolder, parentDir, fisheye, packedAlphaAt, FISHEYE_FOV, PROJECTIONS, HandsTogether,
   PRAYER_LOW_ANGLE, awayStep, isAway, AwayGuard, AWAY_END_MS,
 } from '../public/core.js';
@@ -618,7 +618,17 @@ test('SwipeDetector: a quick clear swipe fires once, in either direction setting
   assert.ok(right.last.distance >= 0.15 && right.last.speed >= 0.7);
   const left = new SwipeDetector();
   assert.equal(stroke(left, { dir: -1, motion: -1, metres: 0.25, ms: 200, startAt: 0 }), 1);
-  assert.equal(SKIP_SECONDS, 30);
+});
+
+test('a flick of the right hand skips forward 1 min, the left hand goes back 30 s, and the message counts a run', () => {
+  assert.equal(flickSeconds('right'), 60);
+  assert.equal(flickSeconds('left'), -30);
+  assert.equal(skipLabel(60), '+1 min >>');
+  assert.equal(skipLabel(180), '+3 min >>');
+  assert.equal(skipLabel(-30), '<< -30 s');
+  assert.equal(skipLabel(-60), '<< -1 min');
+  assert.equal(skipLabel(-90), '<< -1 min 30 s');
+  assert.equal(skipLabel(30), '+30 s >>', 'a part of a minute forward shows too');
 });
 
 test('SwipeDetector: the wrong direction, a slow sweep, a short flick and a diagonal stroke do not fire', () => {

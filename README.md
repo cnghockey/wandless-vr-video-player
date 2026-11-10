@@ -13,7 +13,7 @@ Free and open source. If you like it, [send a few sats over Lightning](#support-
 ## Why Wandless
 
 - **Remote-free: your hands are the whole remote.** Pinch with two hands to zoom a VR180 picture, pinch with one hand to turn it or to
-  move a flat screen, flick a hand to skip 30 s, double pinch for the menu, press your palms together to pause.
+  move a flat screen, flick a hand to skip 1 min forward or 30 s back, double pinch for the menu, press your palms together to pause.
   Hands resting in your lap do nothing.
 - **Nothing to install on the headset.** It runs in the Meta Quest Browser.
 - **A Windows PC is the server, with no terminal.** Double-click to start. A control page in your browser shows the
@@ -88,8 +88,10 @@ From the source folder (below), Wandless never asks GitHub: update it with Git.
    `node scripts/get-build-node.mjs` once first: it downloads the newest Node from nodejs.org, checks its SHA-256 against
    the list nodejs.org publishes, and unpacks it into `.tools\node\`, for building only (your Node stays as it is).
    `npm run package` then uses it. It writes `release\Wandless.exe` and prints its version, size and SHA-256. It puts
-   `brand/wandless.ico` into the file as its icon (`scripts/exe-icon.mjs`; the build tool `resedit` does it, a dev
-   dependency that never ships). The program inside is not touched.
+   `brand/wandless.ico` into the file as its icon, and the name "Wandless VR Video Player" in place of Node's: the
+   Windows Firewall prompt, Task Manager and the file's Properties show that name (`scripts/exe-icon.mjs`; the build
+   tool `resedit` does it, a dev dependency that never ships). Node keeps its credit in the copyright line. The program
+   inside is not touched.
 3. Make a GitHub release with the tag `v<version>` and attach `release\Wandless.exe` under exactly that name. A release
    without the file shows on the control page as "has no Wandless.exe to download yet".
 
@@ -205,7 +207,7 @@ If a step fails, tell me which one. The fallback is a copy on a public web host 
 | VR180 | Pinch with one hand, then move the hand | Turn the picture left, right, up or down |
 | Flat | Pinch with one hand, then move the hand | Move the screen (it turns round you and follows your hand distance) |
 | Flat | Pinch with both hands, spread or close | Resize the screen |
-| Both | Flick your **right** hand quickly from the outside toward the centre, open hand (it moves left) | Skip forward 30 s ("+30 s >>" shows) |
+| Both | Flick your **right** hand quickly from the outside toward the centre, open hand (it moves left) | Skip forward 1 min ("+1 min >>" shows) |
 | Both | Flick your **left** hand quickly from the outside toward the centre, open hand (it moves right) | Go back 30 s ("<< -30 s" shows) |
 | Both | **Double pinch**: two quick pinches with one hand | The menu opens where you look. A double pinch closes it again. |
 | Both | Point at a button, then pinch | Press it. Drag along the seek bar to scrub. |
@@ -237,7 +239,8 @@ until a model is ready, and with the gesture numbers on.
 **Swipe rules.** At least 15 cm in under 0.35 s (about 0.7 m/s or more), mostly sideways, with an open hand,
 and only toward the centre of your body. The stroke back outward is ignored, so you do not skip twice.
 After a swipe, the next one counts as soon as the hand has come back 4 cm (and 0.25 s have passed): quick repeated
-flicks all count, and one long sweep counts once. Quick skips the same way add up on the message (+60 s, +90 s).
+flicks all count, and one long sweep counts once. Quick skips the same way add up on the message (+2 min, +3 min).
+Forward is 1 min and back is 30 s: forward was 30 s up to 0.1.1, and the gesture log showed that most flicks go forward, often several in a row.
 A pinching hand, a hand in the bottom quarter of your view and a hand pointing at the menu never swipe. Swipe with the hand in your view, at about chin height. Both hands moving in at the same time
 (to press them together) is never a skip.
 
@@ -453,8 +456,7 @@ A chroma key for a real green screen (uneven, with shadows: the cut here is for 
 fisheye videos with a filled background, a lens-exact MKX200 / VRCA220 model (they use the equidistant model at their
 angle), VR360, controller input, resume position, a password on the offline copy, picture subtitles (DVD, Blu-ray),
 subtitle size and colour settings, and an on-the-fly conversion for files the headset cannot play (DTS sound; MKV, if
-the Quest does not play it). For `Wandless.exe`: a code signature (without one, SmartScreen warns on the first run), and a file description, so that
-the Windows Firewall prompt and Task Manager say "Wandless VR Video Player" and not "Node.js".
+the Quest does not play it). For `Wandless.exe`: a code signature (without one, SmartScreen warns on the first run).
 
 ## Logo
 

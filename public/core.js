@@ -679,7 +679,22 @@ export function dragAngles(start, a0, a) {
 
 // ---------------------------------------------------------------- gesture zone and swipe
 
-export const SKIP_SECONDS = 30;
+// A flick of the right hand skips forward 1 min. A flick of the left hand goes back 30 s.
+// Forward was 30 s up to 0.1.1. The log of 2026-11-04 to 11-10: 265 of 284 flicks went forward, and 150 of those were
+// in a run (two or more, each within 2.5 s of the one before). Back stays short: it is for the moment you just missed.
+const SKIP_FORWARD_SECONDS = 60;
+const SKIP_BACK_SECONDS = 30;
+export const flickSeconds = (hand) => (hand === 'right' ? SKIP_FORWARD_SECONDS : -SKIP_BACK_SECONDS);
+
+// The message after a skip. seconds: the total of a run of skips, + = forward.
+// "+1 min >>", "+3 min >>", "<< -30 s", "<< -1 min 30 s".
+export function skipLabel(seconds) {
+  const total = Math.abs(seconds);
+  const min = Math.floor(total / 60);
+  const s = total % 60;
+  const amount = [min && `${min} min`, s && `${s} s`].filter(Boolean).join(' ');
+  return seconds > 0 ? `+${amount} >>` : `<< -${amount}`;
+}
 
 export const LOW_VIEW_ANGLE = 0.44; // radians, about 25 degrees: the bottom quarter of what you see
 

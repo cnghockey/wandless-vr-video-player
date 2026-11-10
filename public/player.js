@@ -5,7 +5,7 @@ import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, fisheye, FISHEYE_FOV, clampZoom, GestureTracker, remoteGrab,
   clampScreenScale, PokeDetector, PANEL_W, PANEL_H, panelLayout, buttonAt, seekFraction, LIST_SLOTS,
   formatTime, describeInputs, pinchedPanelStays, PANEL_LOOK_AWAY, START_MENU_TIMES, placeInView, aimAngles,
-  dragAngles, inGestureZone, SwipeDetector, SKIP_SECONDS, DoublePinch, HandsTogether, PRAYER_LOW_ANGLE, SEE_THROUGH, listFolder, parentDir,
+  dragAngles, inGestureZone, SwipeDetector, flickSeconds, skipLabel, DoublePinch, HandsTogether, PRAYER_LOW_ANGLE, SEE_THROUGH, listFolder, parentDir,
   SPEED_PRESETS, SPEED_MIN, SPEED_MAX, clampSpeed, stepSpeed, formatSpeed, compareBy, formatSize, cueText, wrapLines, decodeText,
   parseSubtitles, describeSubtitle, audioLabel, numberSameLabels, orderByLanguage, pickSubtitle, baseLanguage, syncAudio,
   readFrames, keyCbCr, CUT_WIDTH, colourName, subtitleTag, AwayGuard,
@@ -288,7 +288,7 @@ function angleToPanel() {
   return Math.acos(Math.max(-1, Math.min(1, toPanel.dot(headDir))));
 }
 
-// A short message in front of you: "+30 s >>" after a swipe. It fades out by itself.
+// A short message in front of you: "+1 min >>" after a swipe. It fades out by itself.
 const toastCanvas = document.createElement('canvas');
 toastCanvas.width = 512;
 toastCanvas.height = 160;
@@ -468,14 +468,14 @@ setInterval(() => {
   sideAudio.playbackRate = rate;
 }, 250);
 
-// Quick skips the same way add up on the message ("+60 s >>", "+90 s >>"), so you see each one count.
+// Quick skips the same way add up on the message ("+2 min >>", "+3 min >>"), so you see each one count.
 let skipRun = { seconds: 0, at: -Infinity };
 function skip(seconds, now) {
   const end = Number.isFinite(video.duration) ? video.duration : Infinity;
   video.currentTime = Math.min(end, Math.max(0, video.currentTime + seconds));
   const same = Math.sign(seconds) === Math.sign(skipRun.seconds) && now - skipRun.at < 2500;
   skipRun = { seconds: same ? skipRun.seconds + seconds : seconds, at: now };
-  showToast(skipRun.seconds > 0 ? `+${skipRun.seconds} s >>` : `<< ${skipRun.seconds} s`, now);
+  showToast(skipLabel(skipRun.seconds), now);
 }
 
 // The menu's pages: 'main', 'subs', 'audio', 'view' (see panelLayout in core.js). start: the first choice shown on
@@ -924,7 +924,7 @@ function frame(time) {
   if (ev) handleGesture(ev);
 
   // Swipe: a quick sideways flick of an open hand, from the edge toward the centre of your body.
-  // The right hand flicking left skips forward 30 s. The left hand flicking right goes back 30 s.
+  // The right hand flicking left skips forward 1 min. The left hand flicking right goes back 30 s.
   // The stroke back outward is ignored. A pinching hand, a hand out of view and a hand aiming at the panel do not count.
   const across = { x: -heading.z, z: heading.x }; // across your body, + = to your right
   const inwardOf = (i) => (hands[i].userData.handedness === 'right' ? -1 : 1); // the right hand moves left, the left hand right
@@ -950,7 +950,7 @@ function frame(time) {
       logEvent('swipe-ignored', { hand: side, why: 'both hands moved in' });
       continue;
     }
-    skip(side === 'right' ? SKIP_SECONDS : -SKIP_SECONDS, time);
+    skip(flickSeconds(side), time);
     const peak = swipers[i].last;
     logEvent('swipe', { hand: side, cm: peak ? Math.round(peak.distance * 100) : null, speed: peak ? +peak.speed.toFixed(2) : null });
   }

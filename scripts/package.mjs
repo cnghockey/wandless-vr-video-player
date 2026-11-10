@@ -8,8 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildApp } from './build.mjs';
-import { setIcon } from './exe-icon.mjs';
-import { ASSETS } from '../lib/install.js';
+import { setDetails, setIcon } from './exe-icon.mjs';
+import { ASSETS, NAME, TITLE } from '../lib/install.js';
 import { ASSET, parseRepo } from '../lib/update.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,8 +59,10 @@ export async function packageExe({ outDir = path.join(ROOT, 'release'), version,
   }, null, 2));
   fs.rmSync(exe, { force: true });
   execFileSync(process.execPath, ['--build-sea', config], { stdio: 'inherit' });
-  // Node's icon goes, the Wandless icon comes (Explorer, the taskbar, Settings > Apps). The app inside stays: the program is run in the checks.
-  fs.writeFileSync(exe, setIcon(fs.readFileSync(exe), fs.readFileSync(path.join(ROOT, 'brand', 'wandless.ico'))));
+  // Node's icon goes, the Wandless icon comes (Explorer, the taskbar, Settings > Apps). Node's name goes too: the Windows Firewall
+  // prompt and Task Manager say "Wandless VR Video Player". The app inside stays: the program is run in the checks.
+  const branded = setIcon(fs.readFileSync(exe), fs.readFileSync(path.join(ROOT, 'brand', 'wandless.ico')));
+  fs.writeFileSync(exe, setDetails(branded, { title: TITLE, name: NAME, version: app.version }));
   const bytes = fs.readFileSync(exe);
   return { exe, version: app.version, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
 }

@@ -22,7 +22,8 @@ You need a Windows PC.
    [ffmpeg](https://ffmpeg.org) (with ffprobe, which comes with it). Wandless finds it on the PATH, or in a Jellyfin
    install. Otherwise set `FFMPEG_PATH` to the full path of `ffmpeg.exe`.
 
-**On the first start, Windows Firewall asks about the program.** It may call it Node.js: Wandless is built on it.
+**On the first start, Windows Firewall asks about the program.** It names it Wandless VR Video Player or
+`Wandless.exe`. (Up to 0.1.1 it could say Node.js: Wandless is built on it.)
 Allow it. If your home network is set as "Public" in Windows, allow Public too, or the headset cannot connect.
 
 To remove Wandless: **Settings > Apps > Wandless > Uninstall**. Your videos stay.
@@ -116,9 +117,9 @@ of the picture. They look like smooth, see-through hands and glow orange while t
 | Close the menu | Press **X**, pinch anywhere that is not the menu, or look away. It also closes after 8 s with no hand on it. |
 | Press a button | Point at it: a ray comes out of your hand. Then pinch. |
 | Pause or play | **Prayer hands**: press your palms together, fingers up, at chest height or higher, and hold for a moment, like a clap that stays. A quick clap does nothing. |
-| Skip forward 30 s | Flick your **right** hand quickly toward the middle, hand open. |
+| Skip forward 1 min | Flick your **right** hand quickly toward the middle, hand open. |
 | Go back 30 s | Flick your **left** hand quickly toward the middle, hand open. |
-| Skip more | Flick again at once, as often as you like. The message adds up: +60 s, +90 s. |
+| Skip more | Flick again at once, as often as you like. The message adds up: +2 min, +3 min. |
 | Zoom (VR180) | Pinch with both hands. Move them apart to zoom in, together to zoom out. |
 | Turn the picture (VR180) | Pinch with one hand and move it. |
 | Move the screen (flat) | Pinch with one hand and move it. |
@@ -217,7 +218,7 @@ The offline copy has no folder list and no passcode. It plays only the files you
 
 | Problem | Try this |
 |---|---|
-| The headset cannot open the address | Check that the headset and the PC are on the same Wi-Fi. A guest or public Wi-Fi often blocks devices from each other: turn on the PC's **Mobile hotspot** and connect the headset to it. The address is then `192.168.137.1`. Check that Windows Firewall allows Node.js. |
+| The headset cannot open the address | Check that the headset and the PC are on the same Wi-Fi. A guest or public Wi-Fi often blocks devices from each other: turn on the PC's **Mobile hotspot** and connect the headset to it. The address is then `192.168.137.1`. Check that Windows Firewall allows Wandless: in its list of allowed apps, look for `wandless.exe`, Wandless VR Video Player or Node.js JavaScript Runtime. |
 | Only the full address works | Port 80 is busy on the PC. The control page then shows the full address, for example `https://192.168.1.20:8443/`. Type all of it. |
 | The control page does not open | Open `http://127.0.0.1:8440` in a browser on the PC. If the Wandless window says the control page could not start, another program uses port 8440. |
 | You forgot the passcode | Choose a new one on the control page. It does not ask for the old one: only this PC can open the control page. |
