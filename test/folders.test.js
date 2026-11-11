@@ -125,6 +125,37 @@ test('plain http on the helper port sends the browser to the https app, whatever
   assert.equal(r.location, `https://127.0.0.1:${srv.port}/`);
 });
 
+// One request to the plain-http helper, as a browser sends it (it asks for a page) unless `headers` says otherwise.
+const askHelper = (headers = {}, method = 'GET') => new Promise((resolve, reject) => {
+  const req = http.request({ host: '127.0.0.1', port: srv.httpPort, path: '/', method, headers: { Accept: 'text/html,application/xhtml+xml', ...headers } }, (res) => {
+    let body = '';
+    res.on('data', (c) => { body += c; });
+    res.on('end', () => resolve({ status: res.statusCode, location: res.headers.location, cookie: (res.headers['set-cookie'] || [])[0] || '', type: res.headers['content-type'], body }));
+  });
+  req.on('error', reject);
+  req.end();
+});
+
+test('a browser\'s first visit to the helper port gets a short page about the certificate warning, then goes straight on', async () => {
+  const first = await askHelper({ Host: 'evil.example' });
+  assert.equal(first.status, 200);
+  assert.match(first.type, /^text\/html/);
+  assert.ok(first.body.includes(`<a href="https://127.0.0.1:${srv.port}/">Continue</a>`), 'the button goes to the https app');
+  assert.match(first.body, /Tap <b>Advanced<\/b>/);
+  assert.match(first.body, /Tap <b>Proceed to 127\.0\.0\.1<\/b>/, 'it names the address the warning will show');
+  assert.ok(!first.body.includes('evil.example'), 'never the Host the browser claims');
+  assert.match(first.cookie, /^wandless_intro=1; Max-Age=31536000; Path=\/; HttpOnly; SameSite=Lax$/);
+  // The browser sends the cookie back: no page again.
+  const next = await askHelper({ Cookie: 'other=2; wandless_intro=1' });
+  assert.equal(next.status, 302);
+  assert.equal(next.location, `https://127.0.0.1:${srv.port}/`);
+  assert.equal(next.cookie, '');
+  // Only a GET for a page gets the page.
+  assert.equal((await askHelper({}, 'POST')).status, 302);
+  assert.equal((await askHelper({ Accept: 'application/json' })).status, 302);
+  assert.equal((await askHelper({ Cookie: 'wandless_intro=0' })).status, 200, 'another value is not a visit');
+});
+
 test('a busy helper port is only logged: the https app still starts', async () => {
   const lines = [];
   const other = await startServer({ port: 0, host: '127.0.0.1', httpPort: srv.httpPort, stateDir: path.join(base, 'state'),

@@ -72,7 +72,8 @@ The first start lists your **Videos** folder. Remove it if you do not want it.
 1. Put on the headset. Turn on hand tracking in the Quest settings, if it is off.
 2. Open the **Meta Quest Browser**.
 3. Type the address from the control page, for example `192.168.1.20`.
-4. The first time, the browser warns about the certificate. Tap **Advanced**, then **Proceed**. This is normal: the PC
+4. The first time, Wandless shows a short page that says what comes next: tap **Continue**. Then the browser warns
+   about the certificate. Tap **Advanced**, then **Proceed**. This is normal: the PC
    made its own certificate. The warning comes back only when the PC has an address that Wandless has not seen before,
    for example on a new network. (Up to 0.1.3 it came back at every change of the PC's addresses, for example when you
    turned the Mobile hotspot on or off.)

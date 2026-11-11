@@ -142,6 +142,8 @@ npm start
 
 **Type only the laptop's address**, for example `192.168.1.20`. A small helper on port 80 sends the browser on to
 `https://192.168.1.20:8443/`. Then **bookmark the page** (the star in the address bar), so you never type it again.
+A browser's first visit to the helper gets a short page before it goes on: what the certificate warning is, what to tap,
+and a **Continue** button. A cookie remembers the visit for a year, and a program that asks for no page is sent straight on.
 
 | The headset is on | Address |
 |---|---|
@@ -151,8 +153,8 @@ npm start
 
 **The certificate.** Wandless makes one certificate for the PC (`lib/cert.js`) and keeps in it every address the PC has had,
 the newest 8. A new certificate brings the browser warning back on the headset, so Wandless makes one only for an address it
-has not seen, or when less than 30 days of its 825 are left. A network that goes away and comes back, such as the Mobile
-hotspot, does not make one. Up to 0.1.3 any change of the PC's addresses did. Anyone who can reach the port can read the
+has not seen, or when less than 30 days of its 10 years are left. A network that goes away and comes back, such as the Mobile
+hotspot, does not make one. Up to 0.1.3 any change of the PC's addresses did, and the certificate lasted 825 days. Anyone who can reach the port can read the
 addresses in the certificate before the passcode: they are private network numbers, but they show the networks the PC has used.
 
 - If the address ever changes (another network, or the router gave a new one), the control page shows the new one.
@@ -164,7 +166,8 @@ addresses in the certificate before the passcode: they are private network numbe
 
 1. Turn on hand tracking in the Quest settings.
 2. Open the Meta Quest Browser. Type the laptop address, or open your bookmark.
-3. First visit only: the browser warns about the certificate. Tap **Advanced**, then **Proceed**.
+3. First visit only: a short page says what comes next (tap **Continue**), then the browser warns about the certificate.
+   Tap **Advanced**, then **Proceed**.
 4. Enter the passcode on the keypad. Pick a folder, then a video: its page opens over the list.
    For a file on the headset, open the **This headset** tab and tap **Choose a video**.
 5. Check the picture settings (projection, 3D layout), and the audio and subtitles if the video has them.

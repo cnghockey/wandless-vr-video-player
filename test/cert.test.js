@@ -7,7 +7,7 @@ import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import tls from 'node:tls';
-import { makeCert, ensureCert } from '../lib/cert.js';
+import { makeCert, ensureCert, CERT_DAYS } from '../lib/cert.js';
 import { findOpenssl } from './openssl.js';
 
 const DAY = 86_400_000;
@@ -23,7 +23,8 @@ test('the certificate has the shape the headset accepted from openssl req -x509'
   assert.equal(x.publicKey.asymmetricKeyType, 'rsa');
   assert.equal(x.publicKey.asymmetricKeyDetails.modulusLength, 2048);
   assert.equal(new Date(x.validFrom).getTime(), NOW.getTime() - DAY);
-  assert.equal(new Date(x.validTo).getTime(), NOW.getTime() + 825 * DAY);
+  assert.equal(CERT_DAYS, 3650, '10 years: its end brings the warning back, so it is far away');
+  assert.equal(new Date(x.validTo).getTime(), NOW.getTime() + CERT_DAYS * DAY);
   assert.ok(x.verify(x.publicKey), 'signed with its own key');
   assert.ok(x.checkIssued(x));
   assert.ok(x.checkPrivateKey(crypto.createPrivateKey(key)), 'the key belongs to the certificate');
@@ -35,7 +36,7 @@ test('a date from 2050 on is written in the long form, and still reads back', ()
   const now = new Date('2049-06-01T00:00:00Z');
   const x = new crypto.X509Certificate(makeCert([], now).cert);
   assert.equal(new Date(x.validFrom).getTime(), now.getTime() - DAY);
-  assert.equal(new Date(x.validTo).getTime(), now.getTime() + 825 * DAY); // in 2051
+  assert.equal(new Date(x.validTo).getTime(), now.getTime() + CERT_DAYS * DAY); // in 2059
 });
 
 test('a client that trusts the certificate connects; the names cover localhost and each address, no other', async () => {
@@ -117,12 +118,12 @@ test('ensureCert names at most the 8 newest addresses', () => {
 test('ensureCert makes a new certificate when less than 30 days are left, and not before', () => {
   inTempDir((dir) => {
     const a = ensureCert(dir, ['10.0.0.1'], NOW);
-    assert.equal(ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 794 * DAY)).cert, a.cert, '31 days left');
-    const b = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 796 * DAY));
+    assert.equal(ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + (CERT_DAYS - 31) * DAY)).cert, a.cert, '31 days left');
+    const b = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + (CERT_DAYS - 29) * DAY));
     assert.notEqual(b.cert, a.cert, '29 days left');
-    assert.equal(new Date(new crypto.X509Certificate(b.cert).validTo).getTime(), NOW.getTime() + (796 + 825) * DAY);
+    assert.equal(new Date(new crypto.X509Certificate(b.cert).validTo).getTime(), NOW.getTime() + (CERT_DAYS - 29 + CERT_DAYS) * DAY);
     assert.deepEqual(names(b.cert), ['10.0.0.1']);
-    const c = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 3000 * DAY));
+    const c = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 3 * CERT_DAYS * DAY));
     assert.notEqual(c.cert, b.cert, 'long out of date');
   });
 });

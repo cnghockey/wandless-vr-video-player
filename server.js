@@ -57,6 +57,38 @@ async function readBody(req, limit = 4096) {
 
 const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+// The Wandless icon, for the pages the server writes itself.
+const PAGE_ICON = `<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230f172a'/%3E%3Cg fill='none' stroke='%23f8fafc' stroke-width='60' stroke-linecap='round'%3E%3Cpath d='M148 410 L236 296'/%3E%3Cpath d='M364 410 L276 296'/%3E%3C/g%3E%3Cpath fill='%23f7931a' d='M256 66 C262 128 284 148 346 158 C284 168 262 188 256 252 C250 188 228 168 166 158 C228 148 250 128 256 66 Z'/%3E%3Ccircle cx='354' cy='92' r='11' fill='%23f7931a'/%3E%3Ccircle cx='168' cy='224' r='8' fill='%23f7931a'/%3E%3C/svg%3E">`;
+
+// The page before the certificate warning (see redirectToHttps). target: the https address of the app. host: the
+// address the warning will name, so the reader can check it.
+function introPage(target, host) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wandless VR Video Player</title>
+${PAGE_ICON}
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e1116;color:#e8eaed;font:22px/1.45 system-ui,sans-serif}
+  main{display:grid;gap:18px;width:min(620px,88vw);padding:24px 0}
+  h1{margin:0;font-size:28px}
+  p,ol{margin:0}
+  li{margin:6px 0}
+  b{color:#fff}
+  a{display:block;text-align:center;padding:18px;border-radius:12px;background:#f7931a;color:#111;font-weight:600;text-decoration:none}
+  .small{color:#9aa3b2;font-size:18px}
+</style></head><body>
+<main>
+  <h1>Wandless VR Video Player</h1>
+  <p>The next screen is a warning about the certificate. This is normal: your PC made its own certificate, and the browser cannot check it.</p>
+  <ol>
+    <li>Tap <b>Advanced</b>.</li>
+    <li>Tap <b>Proceed to ${escapeHtml(host)}</b>. Check the address: it must be this one, the address of your PC.</li>
+  </ol>
+  <a href="${escapeHtml(target)}">Continue</a>
+  <p class="small">You see this page once. After the passcode, bookmark the player: then you never type the address again.</p>
+</main></body></html>`;
+}
+
 // kind 'passcode': a big number keypad on the page (easy to hit in VR), and the number keyboard if you tap the field.
 // kind 'password': a text field and the full keyboard.
 function loginPage(message = '', kind = 'password') {
@@ -75,7 +107,7 @@ function loginPage(message = '', kind = 'password') {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Wandless VR Video Player</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230f172a'/%3E%3Cg fill='none' stroke='%23f8fafc' stroke-width='60' stroke-linecap='round'%3E%3Cpath d='M148 410 L236 296'/%3E%3Cpath d='M364 410 L276 296'/%3E%3C/g%3E%3Cpath fill='%23f7931a' d='M256 66 C262 128 284 148 346 158 C284 168 262 188 256 252 C250 188 228 168 166 158 C228 148 250 128 256 66 Z'/%3E%3Ccircle cx='354' cy='92' r='11' fill='%23f7931a'/%3E%3Ccircle cx='168' cy='224' r='8' fill='%23f7931a'/%3E%3C/svg%3E">
+${PAGE_ICON}
 <style>
   body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e1116;color:#e8eaed;font:20px system-ui,sans-serif}
   form{display:grid;gap:18px;width:min(420px,88vw)}
@@ -432,11 +464,20 @@ export function describeTlsError(err) {
 
 // Plain http (port 80): send the browser on to the https app, so typing only the laptop's address works.
 // The address comes from the socket the browser reached, never from the Host header.
+// The screen after it is the browser's certificate warning, and a new user stops there. So a browser's first visit gets a
+// short page: what comes next, what to tap, and a Continue button to the https app. A cookie remembers the visit (a year):
+// later visits go straight on, as every visit did up to 0.1.3. A program that does not ask for a page goes straight on too.
+const INTRO_COOKIE = 'wandless_intro';
 export function redirectToHttps(httpsPort) {
   return (req, res) => {
     const local = (req.socket.localAddress || '127.0.0.1').replace(/^::ffff:/, '');
     const host = local.includes(':') ? `[${local}]` : local;
-    res.writeHead(302, { Location: `https://${host}${httpsPort === 443 ? '' : `:${httpsPort}`}/`, 'Cache-Control': 'no-store' });
+    const target = `https://${host}${httpsPort === 443 ? '' : `:${httpsPort}`}/`;
+    const wantsPage = req.method === 'GET' && (req.headers.accept || '').includes('text/html');
+    if (wantsPage && parseCookies(req.headers.cookie)[INTRO_COOKIE] !== '1') {
+      return sendText(res, 200, introPage(target, host), HTML, { 'Set-Cookie': `${INTRO_COOKIE}=1; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax` });
+    }
+    res.writeHead(302, { Location: target, 'Cache-Control': 'no-store' });
     res.end();
   };
 }
