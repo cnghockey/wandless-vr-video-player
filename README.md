@@ -149,6 +149,12 @@ npm start
 | The laptop's Mobile Hotspot (Windows Settings, Network, Mobile hotspot) | `192.168.137.1`: always the same |
 | A guest or public Wi-Fi | Probably blocked: these networks often stop device-to-device traffic. Use the hotspot. |
 
+**The certificate.** Wandless makes one certificate for the PC (`lib/cert.js`) and keeps in it every address the PC has had,
+the newest 8. A new certificate brings the browser warning back on the headset, so Wandless makes one only for an address it
+has not seen, or when less than 30 days of its 825 are left. A network that goes away and comes back, such as the Mobile
+hotspot, does not make one. Up to 0.1.3 any change of the PC's addresses did. Anyone who can reach the port can read the
+addresses in the certificate before the passcode: they are private network numbers, but they show the networks the PC has used.
+
 - If the address ever changes (another network, or the router gave a new one), the control page shows the new one.
   To keep the home address fixed, reserve it for the laptop in the router settings (often "DHCP reservation").
 - If port 80 is busy on the laptop, the window says so, and the control page shows the full `https://...:8443/`

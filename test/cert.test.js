@@ -67,17 +67,92 @@ test('a client that trusts the certificate connects; the names cover localhost a
   }
 });
 
-test('ensureCert keeps the certificate while the addresses stay, and makes a new one when they change', () => {
+// ensureCert runs in a new folder each time. names(): the addresses a certificate names, as the browser reads them.
+const inTempDir = (fn) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vrp-cert-'));
   try {
-    const a = ensureCert(dir, ['10.0.0.1']);
-    assert.equal(ensureCert(dir, ['10.0.0.1']).cert, a.cert);
-    const b = ensureCert(dir, ['10.0.0.2']);
-    assert.notEqual(b.cert, a.cert);
-    assert.match(new crypto.X509Certificate(b.cert).subjectAltName, /IP Address:10\.0\.0\.2$/);
+    return fn(dir);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+};
+const names = (cert) => new crypto.X509Certificate(cert).subjectAltName.split(', ')
+  .filter((n) => n.startsWith('IP Address:')).map((n) => n.slice('IP Address:'.length)).filter((ip) => ip !== '127.0.0.1');
+
+test('ensureCert keeps the certificate while the addresses stay, and makes a new one for an address it does not name', () => {
+  inTempDir((dir) => {
+    const a = ensureCert(dir, ['10.0.0.1'], NOW);
+    assert.equal(ensureCert(dir, ['10.0.0.1'], NOW).cert, a.cert);
+    const b = ensureCert(dir, ['10.0.0.2'], NOW);
+    assert.notEqual(b.cert, a.cert);
+    assert.deepEqual(names(b.cert), ['10.0.0.1', '10.0.0.2'], 'the new one still names the old address');
+  });
+});
+
+test('ensureCert: an address that goes away and comes back (a hotspot, a cable, a network you return to) does not make a new certificate', () => {
+  inTempDir((dir) => {
+    const home = ensureCert(dir, ['192.168.1.20'], NOW);
+    const withHotspot = ensureCert(dir, ['192.168.1.20', '192.168.137.1'], NOW);
+    assert.notEqual(withHotspot.cert, home.cert, 'the hotspot is a new address: one new certificate');
+    assert.equal(ensureCert(dir, ['192.168.1.20'], NOW).cert, withHotspot.cert, 'the hotspot is off again');
+    assert.equal(ensureCert(dir, ['192.168.137.1'], NOW).cert, withHotspot.cert, 'the laptop is on the hotspot only');
+    assert.equal(ensureCert(dir, ['192.168.1.20', '192.168.137.1'], NOW).cert, withHotspot.cert, 'the hotspot is on again');
+    assert.equal(ensureCert(dir, [], NOW).cert, withHotspot.cert, 'no network at all (the laptop is offline)');
+  });
+});
+
+test('ensureCert names at most the 8 newest addresses', () => {
+  inTempDir((dir) => {
+    const all = Array.from({ length: 10 }, (_, i) => `10.0.0.${i + 1}`);
+    let last;
+    for (const ip of all) last = ensureCert(dir, [ip], NOW);
+    assert.deepEqual(names(last.cert), all.slice(2), 'the 2 oldest are gone');
+    const again = ensureCert(dir, ['10.0.0.1'], NOW);
+    assert.notEqual(again.cert, last.cert, 'a dropped address is new again');
+    assert.ok(names(again.cert).includes('10.0.0.1'));
+    assert.equal(names(again.cert).length, 8);
+  });
+});
+
+test('ensureCert makes a new certificate when less than 30 days are left, and not before', () => {
+  inTempDir((dir) => {
+    const a = ensureCert(dir, ['10.0.0.1'], NOW);
+    assert.equal(ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 794 * DAY)).cert, a.cert, '31 days left');
+    const b = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 796 * DAY));
+    assert.notEqual(b.cert, a.cert, '29 days left');
+    assert.equal(new Date(new crypto.X509Certificate(b.cert).validTo).getTime(), NOW.getTime() + (796 + 825) * DAY);
+    assert.deepEqual(names(b.cert), ['10.0.0.1']);
+    const c = ensureCert(dir, ['10.0.0.1'], new Date(NOW.getTime() + 3000 * DAY));
+    assert.notEqual(c.cert, b.cert, 'long out of date');
+  });
+});
+
+test('ensureCert keeps the certificate of 0.1.3 (its address file holds the last addresses, sorted): no new warning after the update', () => {
+  inTempDir((dir) => {
+    const { key, cert } = makeCert(['10.0.0.1', '192.168.1.20'], NOW);
+    fs.writeFileSync(path.join(dir, 'tls-key.pem'), key);
+    fs.writeFileSync(path.join(dir, 'tls-cert.pem'), cert);
+    fs.writeFileSync(path.join(dir, 'tls-ips.json'), JSON.stringify(['10.0.0.1', '192.168.1.20']));
+    assert.equal(ensureCert(dir, ['192.168.1.20'], NOW).cert, cert);
+    assert.equal(ensureCert(dir, ['10.0.0.1', '192.168.1.20'], NOW).cert, cert);
+  });
+});
+
+test('ensureCert: a broken or foreign address file, or no key file, makes a new certificate and no crash', () => {
+  inTempDir((dir) => {
+    let before = ensureCert(dir, ['10.0.0.1'], NOW);
+    for (const content of ['not json', '{"a":1}', '[1, null, "x", "10.0.0.1.5"]', '']) {
+      fs.writeFileSync(path.join(dir, 'tls-ips.json'), content);
+      const after = ensureCert(dir, ['10.0.0.1'], NOW);
+      assert.notEqual(after.cert, before.cert, `the file said ${JSON.stringify(content)}`);
+      assert.deepEqual(names(after.cert), ['10.0.0.1']);
+      before = after;
+    }
+    fs.rmSync(path.join(dir, 'tls-key.pem'));
+    const last = ensureCert(dir, ['10.0.0.1'], NOW);
+    assert.notEqual(last.cert, before.cert, 'no key file');
+    assert.ok(new crypto.X509Certificate(last.cert).checkPrivateKey(crypto.createPrivateKey(last.key)));
+  });
 });
 
 const openssl = findOpenssl();
