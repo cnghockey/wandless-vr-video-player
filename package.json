@@ -1,6 +1,6 @@
 {
   "name": "wandless",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Wandless VR Video Player: a remote-free video player for Meta Quest. Total control with your hands alone. VR180 and flat video, laptop streaming or headset-local files.",
   "private": true,
   "type": "module",

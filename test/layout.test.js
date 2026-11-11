@@ -130,6 +130,30 @@ test('readFrames: a fisheye video keeps its mask, and its black corners are neve
   assert.equal(readFrames(five(() => filled(even([2, 250, 74])))).background.kind, 'colour');
 });
 
+test('classifyFrames: a masked fisheye video whose lens ends at 91 % of the eye is fisheye with a mask; the same lens with no mask is not', () => {
+  // A real masked file of 2026-11-11: the picture fills the circle to about 91 %, so only 47 % of the ring is lit (the rule
+  // asks 50 %), while 27 % of its corners are mask red. It went by as flat with a black cut.
+  const lens91 = (x, y) => {
+    const cx = x < SAMPLE_W / 2 ? SAMPLE_W / 4 : (3 * SAMPLE_W) / 4;
+    const d = Math.hypot(x + 0.5 - cx, y + 0.5 - SAMPLE_H / 2) / (SAMPLE_H / 2);
+    return d > 0.91 ? [0, 0, 0] : [40 + ((x * 37 + y * 91) % 150), 60 + ((x * 53 + y * 17) % 120), 80 + ((x * 29 + y * 71) % 100)];
+  };
+  const masked = [frame({ corner: redSpots, inside: lens91 }), frame({ inside: lens91 }), frame({ corner: redSpots, inside: lens91 }), frame({ inside: lens91 }), frame({ corner: redSpots, inside: lens91 })];
+  assert.deepEqual(classifyFrames(masked), { fisheye: true, alpha: true });
+  assert.deepEqual(readFrames(masked), { fisheye: true, alpha: true, background: null }, 'and no black cut');
+  // No mask: the ring rule stays at 50 % (nothing else tells this lens from a black background).
+  assert.deepEqual(classifyFrames(five(() => frame({ inside: lens91 }))), { fisheye: false, alpha: false });
+  // A trace of red (under 2 % of the corners) is not a mask.
+  const trace = (x, y) => (x % 16 === 0 && y % 8 === 0 ? [230, 10, 10] : [0, 0, 0]);
+  assert.deepEqual(classifyFrames(five(() => frame({ corner: trace, inside: lens91 }))), { fisheye: false, alpha: false });
+  // A clear mask does not make a dark ring fisheye: a person in the middle, black up to the circle's edge, stays not fisheye.
+  const person = (x, y) => {
+    const cx = x < SAMPLE_W / 2 ? SAMPLE_W / 4 : (3 * SAMPLE_W) / 4;
+    return Math.hypot(x + 0.5 - cx, y + 0.5 - SAMPLE_H / 2) < SAMPLE_H * 0.3 ? [200, 150, 130] : [0, 0, 0];
+  };
+  assert.deepEqual(classifyFrames(five(() => frame({ corner: redSpots, inside: person }))), { fisheye: false, alpha: false });
+});
+
 const ffmpeg = findFfmpeg();
 let dir;
 
@@ -187,6 +211,16 @@ test('LayoutProbe: an answer cached before the background check counts as not kn
   fs.writeFileSync(cacheFile, JSON.stringify({ [oldKey]: { fisheye: false, alpha: false } }));
   const probe = new LayoutProbe({ ffmpeg, cacheFile });
   assert.equal((await probe.get(f)).background.kind, 'colour');
+  assert.equal(probe.probed, 1, 'looked at again');
+});
+
+test('LayoutProbe: an answer cached before the lens-edge fix counts as not known (a masked fisheye file was cached as flat)', { skip: !ffmpeg && 'ffmpeg not found' }, async () => {
+  const cacheFile = path.join(dir, 'v2-layouts.json');
+  const f = facts(path.join(dir, 'packed.mp4'));
+  const v2Key = crypto.createHash('sha256').update(`2|${f.file}|${f.size}|${f.mtimeMs}`).digest('hex').slice(0, 24);
+  fs.writeFileSync(cacheFile, JSON.stringify({ [v2Key]: { fisheye: false, alpha: false, background: { kind: 'black', rgb: [1, 2, 2], edge: 0.084 } } }));
+  const probe = new LayoutProbe({ ffmpeg, cacheFile });
+  assert.deepEqual(await probe.get(f), { fisheye: true, alpha: true, background: null });
   assert.equal(probe.probed, 1, 'looked at again');
 });
 

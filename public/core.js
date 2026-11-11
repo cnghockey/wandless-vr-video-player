@@ -175,8 +175,15 @@ export function packedAlphaAt(eye, u, v) {
 // it, or more). One dark scene alone proves nothing, so a full-frame video with one dark frame stays full frame.
 // The edge ring tells a fisheye picture (it fills its circle: 43 to 75 % lit there, 64 % or more in some frame, on
 // 5 real files) from a black filled background round a person in the middle (black up to the edge too).
+// A lens that ends well inside the eye's square lights less of the ring. A real masked file of 2026-11-11 reached 47 %
+// at most (its lens ends at about 91 % of the eye), and went by as flat with a black cut. A mask in the corners is
+// proof of a fisheye video by itself (a black background has no red there), so with a clear mask (2 % or more of the
+// corners are red in some frame; that file: 27 % at most) a ring of 30 % is enough.
 // Packed mask: a fisheye video with mask red in the corners of some frame (a plain fisheye video has pure black
 // corners).
+const RING_MIN = 0.5;
+const RING_MIN_WITH_MASK = 0.3;
+const CLEAR_MASK_RED = 0.02;
 export function classifyFrames(frames, width = 128, height = 64) {
   const stats = frames.map((rgb) => {
     let corner = 0;
@@ -210,7 +217,8 @@ export function classifyFrames(frames, width = 128, height = 64) {
     }
     return { dark: blackOrRed / corner, red: red / corner, lit: lit / inner, ring: ringLit / ring };
   });
-  const fisheye = stats.length > 0 && stats.every((s) => s.dark >= 0.9) && stats.some((s) => s.lit > 0.2) && stats.some((s) => s.ring >= 0.5);
+  const ringMin = stats.some((s) => s.red >= CLEAR_MASK_RED) ? RING_MIN_WITH_MASK : RING_MIN;
+  const fisheye = stats.length > 0 && stats.every((s) => s.dark >= 0.9) && stats.some((s) => s.lit > 0.2) && stats.some((s) => s.ring >= ringMin);
   return { fisheye, alpha: fisheye && stats.some((s) => s.red > 0.003) };
 }
 
