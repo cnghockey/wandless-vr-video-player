@@ -1,0 +1,49 @@
+# Publishes the copy on the web (GitHub Pages) from main: the one-file player, marked so that it plays only the
+# files on the device that opens it. See "The copy on the web" in README.md.
+name: web copy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'scripts/build.mjs'
+      - 'brand/wandless-banner.png'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/web-copy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: The build tests (the mark, the address rules, one self-contained page)
+        run: node --test test/build.test.js
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Build the copy for this address (a wrong address stops the build)
+        run: node scripts/build.mjs --web "${{ steps.pages.outputs.base_url }}/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
+      - id: deploy
+        uses: actions/deploy-pages@v4

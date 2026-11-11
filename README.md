@@ -5,6 +5,9 @@
 **Wandless** is a free, open-source VR video player for the Meta Quest with hand tracking. It plays VR180 and flat video, and your hands are the whole remote:
 no remote, no controllers. Stream from your laptop, or play a file stored on the headset.
 
+**Try it now, with no PC:** on the headset, open <https://cnghockey.github.io/wandless-vr-video-player/> in the Meta Quest
+Browser. Tap **Choose a video**, pick a video stored on the headset, then tap **Watch in VR**. Nothing to install.
+
 **New here? Read [GUIDE.md](GUIDE.md):** setup, folders, the headset, gestures, passthrough, airplane mode.
 This README is the technical reference.
 
@@ -196,7 +199,23 @@ Test it before a trip, at home, in this order. Each step tells you something:
 2. Type `file:///sdcard/Download/wandless.html`. Does the page open?
 3. Tap **Choose a video**. Do you see your headset videos? (Before, the picker said "no files available for upload".)
 4. Pick one and tap **Watch in VR**. Does it play in VR?
-If a step fails, tell me which one. The fallback is a copy on a public web host with an offline cache.
+If a step fails, tell me which one. The copy on the web (below) needs a network: it has no offline cache.
+
+## The copy on the web
+
+<https://cnghockey.github.io/wandless-vr-video-player/> is the same one-file player, published from `main` by
+`.github/workflows/web-copy.yml` (GitHub Pages). It is for a first try, and for a headset with no PC near it.
+
+- It plays only the files on the device that opens it: **Choose a video**. It has no library, no passcode and no log.
+- It asks its host for the page and for nothing else. The video is not uploaded. GitHub, the host, sees the internet
+  address of the device when the page loads.
+- **Download this page to the headset** saves it as `wandless.html`, for airplane mode (the section above).
+- The build marks the page: `node scripts/build.mjs --web https://name.example/path/` writes `dist/site/index.html`
+  with `data-web-copy` on `<html>`, and `public/player.js` then never asks for the laptop's `/api/...`. The same
+  command makes a copy for your own web host.
+
+Proven in a desktop browser on a plain web server: a local video opens, and the browser asks for the page only. A
+control run with the laptop's page on the same server does ask for `/api/...`. **Not proven on a Quest yet.**
 
 ## Controls
 

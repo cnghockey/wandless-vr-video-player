@@ -1146,9 +1146,14 @@ renderer.xr.addEventListener('sessionend', () => {
   flushLog();
 });
 
+// Three ways to open this page. The laptop serves it: the library and the log. A copy on the web (its build marks
+// the page, scripts/build.mjs) or a file on the headset: only the files on this device, and no request to a server.
+const served = !document.documentElement.hasAttribute('data-web-copy')
+  && (location.protocol === 'https:' || location.protocol === 'http:');
+
 // A small record of what the hands did, kept on the laptop in .state/session-log.jsonl, so the gestures can be
 // tuned from facts. Only when the laptop serves this page. It holds no video names.
-const canLog = location.protocol === 'https:' || location.protocol === 'http:';
+const canLog = served;
 const logQueue = [];
 
 function logEvent(type, data = {}) {
@@ -1828,8 +1833,8 @@ $('debug').addEventListener('change', () => {
 setLayout(state.projection, state.stereo);
 renderSpeed();
 
-// Served by the laptop (http or https): show the library. Opened from a file on the headset: local files only.
-if (location.protocol === 'https:' || location.protocol === 'http:') {
+// Served by the laptop: show the library. A copy on the web, or a file on the headset: local files only.
+if (served) {
   $('save-offline').hidden = false;
   $('bookmark-tip').hidden = false;
   fetch('/api/info', { credentials: 'same-origin' })

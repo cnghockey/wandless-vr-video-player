@@ -10,6 +10,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 19px/1.45 system-ui, sans-serif; }
   [hidden] { display: none !important; }
+  html:not([data-web-copy]) .web-only, html[data-web-copy] .laptop-only { display: none; }
   a { color: var(--accent); }
   h2 { margin: 0 0 10px; font-size: 22px; }
   button, select, input, .button { font: inherit; color: inherit; }
@@ -134,13 +135,29 @@
   </div>
 
   <div id="headset" class="page" role="tabpanel" aria-labelledby="tab-headset" hidden>
+    <section class="web-only">
+      <h2>Watch VR video with your hands alone</h2>
+      <p>Wandless is a free, open-source VR video player for the Meta Quest. It plays VR180 and flat video. Your hands are the whole remote: no controllers.</p>
+      <ol>
+        <li>Open this page in the Meta Quest Browser.</li>
+        <li>Tap <b>Choose a video</b> and pick a video stored on the headset.</li>
+        <li>Tap <b>Watch in VR</b>. The gestures are on the <b>How to use</b> tab.</li>
+      </ol>
+    </section>
     <section>
       <h2>Play a video stored on this headset</h2>
       <p>It needs no laptop and no network.</p>
       <label class="button primary">Choose a video <input id="pick" type="file" multiple></label>
       <p class="note">Subtitles too: pick the subtitle file together with the video. Press and hold the first file, then tap the other.</p>
+      <p class="note web-only">Your video is not uploaded. It plays from this headset.</p>
     </section>
-    <section>
+    <section class="web-only">
+      <h2>Stream from a Windows PC</h2>
+      <p>Install Wandless on a Windows PC. The headset then shows the video folders of the PC, with previews, subtitles and audio tracks. It is free and open source.</p>
+      <a class="button" href="https://github.com/cnghockey/wandless-vr-video-player#readme" rel="noopener noreferrer">Get Wandless on GitHub</a>
+      <p class="note">No network on a flight? <a href="" download="wandless.html">Download this page to the headset</a> first. Then open <code>file:///sdcard/Download/wandless.html</code> in the browser and bookmark it.</p>
+    </section>
+    <section class="laptop-only">
       <h2>Watch with the laptop off</h2>
       <p id="offline-note" hidden>This is the copy of the player on this headset. It plays only the files on this headset.</p>
       <ol>

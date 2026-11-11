@@ -4,6 +4,7 @@ Wandless VR Video Player (Wandless for short) plays VR180 and flat videos on a M
 
 - **From your PC:** a small server on a Windows PC streams your video folders to the headset over Wi-Fi.
 - **From the headset:** a copy of the player saved on the headset plays videos stored on the headset, with no PC and no network.
+- **A first try, with no PC:** on the headset, open <https://cnghockey.github.io/wandless-vr-video-player/> in the Meta Quest Browser. Tap **Choose a video** and pick a video stored on the headset.
 
 Tested on a Meta Quest 3S with the Meta Quest Browser. Other browsers (for example Wolvic) may give the page no hand data.
 
@@ -204,6 +205,9 @@ You do not need the PC or the network for videos stored on the headset. You need
    - Or copy videos with a USB cable, for example into the headset's `Movies` folder.
 3. In the Quest Browser, open `file:///sdcard/Download/wandless.html` and bookmark it.
 
+**With no PC:** on Wi-Fi, open <https://cnghockey.github.io/wandless-vr-video-player/> on the headset and tap
+**Download this page to the headset**. Then do step 3.
+
 **On the plane (airplane mode):**
 1. Open the bookmark.
 2. Tap **Choose a video** and pick a video on the headset. To have its subtitles, pick the subtitle file (SRT,
@@ -244,6 +248,8 @@ The offline copy has no folder list and no passcode. It plays only the files you
 - The control page answers only on this PC (`127.0.0.1`), never on the Wi-Fi. Anyone who uses this PC can open it.
 - The player has no account and no tracking. One thing leaves your network: at each start, Wandless asks GitHub if
   there is a new version. GitHub sees your internet address. Nothing else is sent.
+- The copy on the web (<https://cnghockey.github.io/wandless-vr-video-player/>) is on GitHub Pages. GitHub sees your
+  internet address when the page loads. The page asks for nothing else. Your video is not uploaded: it plays from the headset.
 - Wandless keeps a small gesture log on the PC (`.state\session-log.jsonl` in the Wandless folder): how the menu opened and closed, swipes,
   pinches. It holds no video names. It helps to tune the gestures. Download or clear it on the control page.
 
