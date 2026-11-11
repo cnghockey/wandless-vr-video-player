@@ -2,7 +2,7 @@
 
 <p align="center"><img src="brand/wandless-banner.png" alt="Wandless VR Video Player: watch VR video with your hands alone. No remote. No controllers." width="640"></p>
 
-**Wandless** is a VR video player for the Meta Quest. It plays VR180 and flat video, and your hands are the whole remote:
+**Wandless** is a free, open-source VR video player for the Meta Quest with hand tracking. It plays VR180 and flat video, and your hands are the whole remote:
 no remote, no controllers. Stream from your laptop, or play a file stored on the headset.
 
 **New here? Read [GUIDE.md](GUIDE.md):** setup, folders, the headset, gestures, passthrough, airplane mode.
