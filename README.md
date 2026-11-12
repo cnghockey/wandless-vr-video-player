@@ -203,12 +203,13 @@ the **Folder** list. It can open their subfolders too, and **Search** looks in e
 The offline copy has no library and no password. It reads only the file you choose, and a subtitle file if you add
 one (**Add a file** on the video's page: SRT, WebVTT or ASS, read on the headset).
 **Not proven on a Quest yet.** It is proven in a desktop browser with all network blocked.
-Test it before a trip, at home, in this order. Each step tells you something:
+Test it before a trip, at home, in this order:
 1. Save the offline copy (step 1 above). Turn on airplane mode, with Wi-Fi off.
 2. Type `file:///sdcard/Download/wandless.html`. Does the page open?
-3. Tap **Choose a video**. Do you see your headset videos? (Before, the picker said "no files available for upload".)
+3. Tap **Choose a video**. Do you see your headset videos?
 4. Pick one and tap **Watch in VR**. Does it play in VR?
-If a step fails, tell me which one. The copy on the web (below) needs a network: it has no offline cache.
+If a step fails, open an issue on GitHub and say which step. The copy on the web (below) needs a network: it has no
+offline cache.
 
 ## The copy on the web
 
@@ -397,7 +398,7 @@ also logs how far below your line of sight the hand was (`below`, degrees) and h
 the line between "in view" and "low" can be moved from facts. A look-away close logs how far you looked (`deg`).
 The swipe `speed` is a peak over single frames (a median of 7 m/s, more than a hand can do): use the distance.
 It holds no video names.
-After a session, ask me to read it: then the gestures are tuned from facts, not from memory. The file starts again
+It is there to tune the gestures from facts, not from memory. The file starts again
 after 5 MB (the one before is kept as `session-log.old.jsonl`). The offline copy keeps no log.
 Download or clear it on the control page.
 
@@ -455,10 +456,8 @@ npm run build
 ## Similar projects
 
 [passthrough-theater](https://github.com/mortonbaker/passthrough-theater) (MIT) is the closest open-source project:
-a LAN video server with a WebXR passthrough player for the Quest. Compared on 2026-10-25 from its README and code;
-the subtitle, audio-track, speed and order rows added on 2026-10-27 from the same copy; our side of the passthrough
-row updated on 2026-10-28.
-Keep this table current: it is how a new user sees what each project is for.
+a LAN video server with a WebXR passthrough player for the Quest. The table compares the two, from its README and code
+at its last change (2026-08-06).
 
 | | Wandless | passthrough-theater |
 |---|---|---|
@@ -468,23 +467,22 @@ Keep this table current: it is how a new user sees what each project is for.
 | Access | Passcode (number keypad) or password, lockout after wrong tries | None ("trusted network only") |
 | Passthrough masks | DeoVR packed alpha (mask in the red corners of fisheye circles), and filled backgrounds (green, violet, black...: the colour is cut); both found from the pictures, also for a file on the headset | Its own top-bottom matte (`alphaPack: "tb"` in a sidecar file), and chroma key |
 | Plain VR180 in passthrough | Half see-through; Passthrough on/off in VR | Chroma key over the room |
-| Without the PC | The player saved on the headset as one file; videos downloadable to the headset | No |
+| Without the PC | A copy on the web, with no install; the player saved on the headset as one file; videos downloadable to the headset | No |
 | Library | Several folders, subfolders, search, previews; order by name, date or size | One media folder, thumbnails, an in-VR scene picker; order by title or length |
 | Subtitles | Files next to the video or in a `Subs` folder, and the text subtitles inside the video; Earlier / Later in VR | None found in its code |
 | Audio tracks | Any track of the file: the laptop sends it in time with the video | None found in its code (the browser's own track only) |
 | Speed | − / + in 0.05 steps (0.5× to 3×), presets 1× to 2×, kept for the next video | One button: 0.5, 0.75, 1, 1.25, 1.5, 2×, kept |
 | Other | Gesture log for tuning | DeoVR-compatible library feed, per-file settings saved from the headset, chapters, a voice assistant, a faststart check |
 
-Ideas worth taking from it later: the in-VR library browser, per-file settings (zoom, position), chapters, the faststart
-check, chroma key for green-screen videos.
-
 ## Not built yet
 
 A chroma key for a real green screen (uneven, with shadows: the cut here is for even filled backgrounds), a cut for
 fisheye videos with a filled background, a lens-exact MKX200 / VRCA220 model (they use the equidistant model at their
 angle), VR360, controller input, resume position, a password on the offline copy, picture subtitles (DVD, Blu-ray),
-subtitle size and colour settings, and an on-the-fly conversion for files the headset cannot play (DTS sound; MKV, if
-the Quest does not play it). For `Wandless.exe`: a code signature (without one, SmartScreen warns on the first run).
+subtitle size and colour settings, a library you browse inside VR, settings kept per video (zoom, position), chapters,
+a warning for a file that starts slowly (its index at the end), and an on-the-fly conversion for files the headset cannot
+play (DTS sound; MKV, if the Quest does not play it). For `Wandless.exe`: a code signature (without one, SmartScreen warns
+on the first run).
 
 ## Logo
 
