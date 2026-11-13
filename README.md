@@ -489,6 +489,13 @@ on the first run).
 The icon is `brand/wandless-icon.svg`: two fingertips meeting in a pinch, with a spark where they touch (the magic, with no wand).
 The PNG sizes, `wandless.ico` and the banner in `brand/` are made from it. The page icon is the same SVG, inside each page.
 
+## More from us
+
+- [VLC for Android subtitle URL fix](https://github.com/cnghockey/vlc-android-subtitle-url-fix): VLC for Android shows the subtitles that Jellyfin for Android TV sends it.
+- [Bestway Spa Relay](https://github.com/cnghockey/bestway-spa-relay): control a Bestway SmartSpa / Lay-Z-Spa from Home Assistant or Homebridge.
+- [EvoStart Car Relay](https://github.com/cnghockey/evo-start-relay): start, stop, lock and unlock an EvoStart / Fortin EVO-START LTE remote starter from Home Assistant or Homebridge.
+- [Sats4AI](https://sats4ai.com): AI tools that people and AI agents pay per call with Bitcoin over Lightning. No signup.
+
 ## Support / donate
 
 Pinch your fingers, pause the movie. No wand, no controllers, still magic. Making it look this easy took a lot of evenings.
