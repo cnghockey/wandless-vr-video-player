@@ -20,6 +20,9 @@ test('the build makes one self-contained page: no modules, no import map, one sc
   assert.ok(!/<link[^>]*rel=["']?stylesheet/.test(html), 'no external stylesheet');
   assert.ok(html.includes('id="pick"') && html.includes('id="vr"'), 'the page markup survived');
   assert.ok(html.includes('Z2xURg'), 'the hand models are inside (a .glb file starts with "glTF", base64 "Z2xURg")');
+  const { version } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.ok(html.includes(`version:"${version}"`), 'the page knows its version, for the gesture log');
+  assert.ok(!html.includes('__WANDLESS_VERSION__'), 'the name the build replaces is gone');
   fs.rmSync(out, { recursive: true, force: true });
 });
 

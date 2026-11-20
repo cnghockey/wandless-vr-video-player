@@ -249,6 +249,7 @@ control run with the laptop's page on the same server does ask for `/api/...`. *
 you look) does nothing: no pinch, zoom, turn, grab, swipe or menu. A hand on your leg does nothing, and when you look
 straight ahead, a hand low at your chest does nothing too. Raise the hand into your view to use it. This follows your
 head, so it also works when you sit back or lie down. A hand behind you or more than 90 cm away does nothing.
+A hand closer than 20 cm to your eyes does nothing and is never drawn: it holds the headset or touches your face.
 Prayer hands count lower, down to chest height (50 degrees below where you look): people press their palms together
 there. The tracker tends to hold touching hands a little apart and can lose one for a moment; both are allowed for.
 
@@ -397,6 +398,8 @@ distance and speed, each pinch (on the menu, in view, or low), pinches from igno
 close together, the palm and fingertip gaps and how low each hand is (`hands-near`). A low pinch or an ignored pinch
 also logs how far below your line of sight the hand was (`below`, degrees) and how far from your head (`away`, cm), so
 the line between "in view" and "low" can be moved from facts. A look-away close logs how far you looked (`deg`).
+Each time a hand comes into the picture, the log says why and where the hand was (`hand-shown`). The first line of a
+session holds the version of the page.
 The swipe `speed` is a peak over single frames (a median of 7 m/s, more than a hand can do): use the distance.
 It holds no video names.
 It is there to tune the gestures from facts, not from memory. The file starts again

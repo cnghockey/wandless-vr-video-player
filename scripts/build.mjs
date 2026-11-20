@@ -39,6 +39,7 @@ function webCopy(template, site) {
 
 // site: null for the laptop's page (wandless.html), or the address of the copy on the web (index.html + its banner).
 export async function buildApp({ outDir = path.join(ROOT, 'dist'), site = null } = {}) {
+  const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   const result = await build({
     entryPoints: [path.join(ROOT, 'public', 'player.js')],
     bundle: true,
@@ -50,6 +51,7 @@ export async function buildApp({ outDir = path.join(ROOT, 'dist'), site = null }
     legalComments: 'none',
     logLevel: 'silent',
     loader: { '.glb': 'binary' }, // the hand models go inside the file, as bytes
+    define: { __WANDLESS_VERSION__: JSON.stringify(version) }, // the gesture log says which page wrote it
   });
   // Inside an inline script, "</script" and "<!--" would end or confuse the script block.
   const js = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');

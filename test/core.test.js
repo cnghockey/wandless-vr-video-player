@@ -5,7 +5,7 @@ import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, clampZoom, ZOOM_MIN, ZOOM_MAX,
   GestureTracker, handInGesture, remoteGrab, PokeDetector, panelLayout, PANEL_W, PANEL_H, LIST_SLOTS, SPEED_PRESETS, buttonAt,
   seekFraction, formatTime, STEREOS, describeInputs, aimAngles, dragAngles,
-  inGestureZone, LOW_VIEW_ANGLE, SwipeDetector, flickSeconds, skipLabel, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
+  inGestureZone, LOW_VIEW_ANGLE, MIN_REACH, SwipeDetector, flickSeconds, skipLabel, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
   PANEL_IDLE_MS, placeInView, listFolder, parentDir, fisheye, packedAlphaAt, FISHEYE_FOV, PROJECTIONS, HandsTogether,
   PRAYER_LOW_ANGLE, awayStep, isAway, AwayGuard, AWAY_END_MS,
 } from '../public/core.js';
@@ -556,6 +556,19 @@ test('inGestureZone follows the head: sitting back, looking down, turning, lying
   const lyingOnSide = { forward: { x: 0, y: 0, z: -1 }, up: { x: -1, y: 0, z: 0 } }; // the top of the head points to -x
   assert.equal(inGestureZone([-0.3, 1.2, -0.3], head, lyingOnSide), true, 'lying on the side: "up" in the view is -x');
   assert.equal(inGestureZone([0.3, 1.2, -0.3], head, lyingOnSide), false, 'lying on the side: +x is the bottom of the view');
+});
+
+test('inGestureZone: a hand on the headset or on your face makes no gesture, also when it is high in the view', () => {
+  const head = { x: 0, y: 1.2, z: 0 };
+  const ahead = { forward: { x: 0, y: 0, z: -1 }, up: { x: 0, y: 1, z: 0 } };
+  assert.equal(MIN_REACH, 0.2);
+  // As the log has them: 11 cm away and 18 degrees above the line of sight (a hand on the top of the headset), 5 cm away.
+  assert.equal(inGestureZone([0.08, 1.234, -0.07], head, ahead), false, 'on the headset, above the line of sight');
+  assert.equal(inGestureZone([0.03, 1.2, -0.04], head, ahead), false, '5 cm from the eyes');
+  assert.equal(inGestureZone([0, 1.2, -0.19], head, ahead), false, '19 cm straight ahead');
+  assert.equal(inGestureZone([0, 1.2, -0.21], head, ahead), true, '21 cm straight ahead');
+  assert.equal(inGestureZone([0, 1.15, -0.3], head, ahead), true, 'a near gesture, 30 cm away');
+  assert.equal(inGestureZone([0.08, 1.234, -0.07], head, ahead, { minReach: 0 }), true, 'what such a hand did before: it counted');
 });
 
 test('DoublePinch: two quick pinches with one hand make a pair; the first one\'s info comes back', () => {

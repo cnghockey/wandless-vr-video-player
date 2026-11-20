@@ -110,6 +110,7 @@ Your audio language, your subtitles and your speed stay for the next video. Then
 ## 7. Gestures
 
 **Only a hand you can see counts.** A hand in the bottom quarter of your view, for example on your lap, does nothing.
+A hand that holds the headset does nothing too.
 Raise your hand to about chin height to use it.
 
 A **pinch** is the tip of your thumb on the tip of your index finger.

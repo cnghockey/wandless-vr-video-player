@@ -713,17 +713,23 @@ export function skipLabel(seconds) {
 
 export const LOW_VIEW_ANGLE = 0.44; // radians, about 25 degrees: the bottom quarter of what you see
 
+// A hand closer to your eyes than this holds the headset or touches your face: it makes no gesture. Its fingers are
+// curled, so it looks like a pinch, and the headset cannot see a hand that close well. The log up to 2026-11-20 has 137
+// such "pinches" at 3 to 15 cm, many of them 10 to 20 degrees ABOVE the line of sight (a hand on the headset), against
+// about 2,000 at 30 to 80 cm. Before, such a hand counted when it was not low in the view.
+export const MIN_REACH = 0.2; // metres
+
 // Only a hand you can see counts for pinch, zoom, turn, grab and swipe. A hand in the bottom quarter of your view
-// (more than about 25 degrees below your line of sight), behind you or out of reach is ignored. A hand resting on
-// your leg is ignored: relaxed fingers often rest within 2 cm of the thumb and look like a pinch.
+// (more than about 25 degrees below your line of sight), behind you, out of reach or on the headset is ignored. A hand
+// resting on your leg is ignored: relaxed fingers often rest within 2 cm of the thumb and look like a pinch.
 // The zone turns with your head, so it works when you sit up, sit back or lie down.
 // point = [x, y, z] of the hand. head = the head position. view = { forward, up }: unit vectors of the head.
-export function inGestureZone(point, head, view, { lowAngle = LOW_VIEW_ANGLE, maxReach = 0.9 } = {}) {
+export function inGestureZone(point, head, view, { lowAngle = LOW_VIEW_ANGLE, minReach = MIN_REACH, maxReach = 0.9 } = {}) {
   const dx = point[0] - head.x;
   const dy = point[1] - head.y;
   const dz = point[2] - head.z;
   const length = Math.hypot(dx, dy, dz);
-  if (length === 0 || length > maxReach) return false;
+  if (length < minReach || length > maxReach) return false;
   const ahead = dx * view.forward.x + dy * view.forward.y + dz * view.forward.z; // + = in front of your face
   const above = dx * view.up.x + dy * view.up.y + dz * view.up.z; // + = above your line of sight
   return ahead >= -0.1 && Math.asin(Math.max(-1, Math.min(1, above / length))) >= -lowAngle;

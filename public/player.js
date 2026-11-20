@@ -3,7 +3,7 @@ import { createHandMesh, updateHandMesh, JOINT_NAMES } from './hands.js';
 import { addMeshHand, handMaterial, HAND_COLOR, PINCH_COLOR } from './handmesh.js';
 import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, fisheye, FISHEYE_FOV, clampZoom, GestureTracker, remoteGrab,
-  clampScreenScale, PokeDetector, PANEL_W, PANEL_H, panelLayout, buttonAt, seekFraction, LIST_SLOTS, handInGesture,
+  clampScreenScale, PokeDetector, PANEL_W, PANEL_H, panelLayout, buttonAt, seekFraction, LIST_SLOTS, handInGesture, MIN_REACH,
   formatTime, describeInputs, pinchedPanelStays, PANEL_LOOK_AWAY, START_MENU_TIMES, placeInView, aimAngles,
   dragAngles, inGestureZone, SwipeDetector, flickSeconds, skipLabel, DoublePinch, HandsTogether, PRAYER_LOW_ANGLE, SEE_THROUGH, listFolder, parentDir,
   SPEED_PRESETS, SPEED_MIN, SPEED_MAX, clampSpeed, stepSpeed, formatSpeed, compareBy, formatSize, cueText, wrapLines, decodeText,
@@ -724,6 +724,8 @@ const inZone = [false, false]; // per hand: in your view (counts) or in the bott
 const prayerZone = [false, false]; // per hand: high enough for prayer hands (down to chest height)
 const belowSight = [0, 0]; // per hand: degrees below your line of sight (for the log)
 const handPlace = [null, null]; // per hand: { below: degrees under your line of sight, away: cm from your head }, or null (for the log)
+const onHeadset = [false, false]; // per hand: closer to your eyes than MIN_REACH (it holds the headset): never drawn, it makes no gesture
+const handDrawn = [false, false]; // per hand: drawn in the last frame (the log notes when a hand comes into the picture)
 // Your hands are drawn only while you use them: while a hand turns, moves or zooms the picture, while it aims at the
 // menu, while the menu shows, and always with the gesture numbers on. They fade out half a second after.
 // A pinch alone does not draw a hand (handInGesture in core.js says why).
@@ -896,6 +898,7 @@ function frame(time) {
     prayerZone[i] = !!at && inGestureZone(at.toArray(), head, view, { lowAngle: PRAYER_LOW_ANGLE });
     if (at) belowSight[i] = Math.round(-Math.asin(Math.max(-1, Math.min(1, at.clone().sub(head).normalize().dot(headUp)))) * 180 / Math.PI);
     handPlace[i] = at ? { below: belowSight[i], away: Math.round(at.distanceTo(head) * 100) } : null;
+    onHeadset[i] = !!at && at.distanceTo(head) < MIN_REACH;
   }
 
   // The headset's pinches, in order. Two quick pinches with one hand open the menu where you look (or close it).
@@ -991,9 +994,14 @@ function frame(time) {
 
   const shown = hands.map((hand, i) => updateHandMesh(handMeshes[i], hand, tracker.pinching[i] || !!rayPress[i]));
   for (let i = 0; i < 2; i++) {
-    if (debugOn || panel.visible || handInGesture(tracker, i) || rayHit[i] || rayPress[i]) handUsedAt[i] = time;
+    const why = debugOn ? 'numbers' : panel.visible ? 'menu' : handInGesture(tracker, i) ? 'gesture' : rayHit[i] || rayPress[i] ? 'ray' : '';
+    if (why) handUsedAt[i] = time;
     handShow[i] += ((time - handUsedAt[i] < 500 ? 1 : 0) - handShow[i]) * (1 - Math.exp(-dt * 10));
-    const drawn = handShow[i] > 0.02;
+    const drawn = handShow[i] > 0.02 && !onHeadset[i];
+    // For the log: each time a hand comes into the picture, why, and where the hand is.
+    const inPicture = drawn && hands[i].visible;
+    if (inPicture && !handDrawn[i]) logEvent('hand-shown', { hand: handLabel(hands[i]), why: why || 'fading', ...handPlace[i] });
+    handDrawn[i] = inPicture;
     const skin = handSkins[i];
     skin.model.visible = drawn && skin.ready;
     skin.material.opacity = handShow[i];
@@ -1131,7 +1139,7 @@ renderer.xr.addEventListener('sessionstart', () => {
   }
   sessionStartedAt = now;
   logEvent('start', { mode: state.passthrough ? 'passthrough' : 'vr', projection: state.projection, stereo: state.stereo,
-    cut: state.background ? state.background.kind : 'none' });
+    cut: state.background ? state.background.kind : 'none', version: typeof __WANDLESS_VERSION__ === 'string' ? __WANDLESS_VERSION__ : '' }); // scripts/build.mjs puts the version in
   setTimeout(() => logEvent('inputs', { inputs: describeInputs(renderer.xr.getSession()) }), 3000); // hands connect after the start
   video.play().catch((err) => showError(`Cannot start playback: ${err.message}`));
 });
