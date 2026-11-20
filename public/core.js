@@ -426,6 +426,13 @@ export class GestureTracker {
   }
 }
 
+// Is hand i moving the picture now: a grab with that hand, or a two-hand zoom? The player draws a hand then, and when
+// the hand uses the menu. A pinch alone is not enough. Relaxed fingers often rest on the thumb, and a resting hand
+// that came into view when the head moved was drawn, glowing orange, in the middle of the picture (a report of
+// 2026-11-19; the log of that evening: a hand at the edge of the zone, its thumb 0.6 to 1 cm from the index finger).
+// A grab starts when a pinched hand moves, so a hand that only rests is never drawn.
+export const handInGesture = (tracker, i) => tracker.kind === 'scale' || (tracker.kind === 'grab' && tracker.hand === i);
+
 // Far grab: turn the object round the head by the hand's angle, and scale its
 // distance by the hand's change of distance. A hand move of 20 cm then moves a
 // screen 5 m away a long way, and the screen follows the hand direction.

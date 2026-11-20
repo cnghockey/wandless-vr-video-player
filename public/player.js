@@ -3,7 +3,7 @@ import { createHandMesh, updateHandMesh, JOINT_NAMES } from './hands.js';
 import { addMeshHand, handMaterial, HAND_COLOR, PINCH_COLOR } from './handmesh.js';
 import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, fisheye, FISHEYE_FOV, clampZoom, GestureTracker, remoteGrab,
-  clampScreenScale, PokeDetector, PANEL_W, PANEL_H, panelLayout, buttonAt, seekFraction, LIST_SLOTS,
+  clampScreenScale, PokeDetector, PANEL_W, PANEL_H, panelLayout, buttonAt, seekFraction, LIST_SLOTS, handInGesture,
   formatTime, describeInputs, pinchedPanelStays, PANEL_LOOK_AWAY, START_MENU_TIMES, placeInView, aimAngles,
   dragAngles, inGestureZone, SwipeDetector, flickSeconds, skipLabel, DoublePinch, HandsTogether, PRAYER_LOW_ANGLE, SEE_THROUGH, listFolder, parentDir,
   SPEED_PRESETS, SPEED_MIN, SPEED_MAX, clampSpeed, stepSpeed, formatSpeed, compareBy, formatSize, cueText, wrapLines, decodeText,
@@ -724,8 +724,9 @@ const inZone = [false, false]; // per hand: in your view (counts) or in the bott
 const prayerZone = [false, false]; // per hand: high enough for prayer hands (down to chest height)
 const belowSight = [0, 0]; // per hand: degrees below your line of sight (for the log)
 const handPlace = [null, null]; // per hand: { below: degrees under your line of sight, away: cm from your head }, or null (for the log)
-// Your hands are drawn only while you use them: while a hand pinches or aims at the menu, while the menu shows, and
-// always with the gesture numbers on. They fade out half a second after.
+// Your hands are drawn only while you use them: while a hand turns, moves or zooms the picture, while it aims at the
+// menu, while the menu shows, and always with the gesture numbers on. They fade out half a second after.
+// A pinch alone does not draw a hand (handInGesture in core.js says why).
 const handShow = [0, 0]; // per hand: how solid it is drawn now, 0..1
 const handUsedAt = [-Infinity, -Infinity];
 let nearAt = 0; // the log of hands held close together: when the last line was written, and how many in a row
@@ -990,7 +991,7 @@ function frame(time) {
 
   const shown = hands.map((hand, i) => updateHandMesh(handMeshes[i], hand, tracker.pinching[i] || !!rayPress[i]));
   for (let i = 0; i < 2; i++) {
-    if (debugOn || panel.visible || tracker.pinching[i] || rayHit[i] || rayPress[i]) handUsedAt[i] = time;
+    if (debugOn || panel.visible || handInGesture(tracker, i) || rayHit[i] || rayPress[i]) handUsedAt[i] = time;
     handShow[i] += ((time - handUsedAt[i] < 500 ? 1 : 0) - handShow[i]) * (1 - Math.exp(-dt * 10));
     const drawn = handShow[i] > 0.02;
     const skin = handSkins[i];

@@ -252,8 +252,9 @@ head, so it also works when you sit back or lie down. A hand behind you or more 
 Prayer hands count lower, down to chest height (50 degrees below where you look): people press their palms together
 there. The tracker tends to hold touching hands a little apart and can lose one for a moment; both are allowed for.
 
-**Hands are drawn only while in use:** while a hand pinches or aims at the menu, and while the menu shows (and
-always with the gesture numbers on). They fade out half a second after. They are smooth hand models
+**Hands are drawn only while in use:** while a hand turns, moves or zooms the picture, while it aims at the menu, and
+while the menu shows (and always with the gesture numbers on). They fade out half a second after. A pinch alone does not
+draw a hand: up to 0.1.4 it did, and a resting hand with its thumb on a finger showed as an orange shape in the picture. They are smooth hand models
 (`public/handmesh.js`: the WebXR Input Profiles generic hands, skinned to your joints by three.js), see-through with
 brighter edges, orange while pinching. The models are inside the player file (no network). The old joint spheres show
 until a model is ready, and with the gesture numbers on.

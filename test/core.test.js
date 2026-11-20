@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Vector3 } from 'three';
 import {
   guessLayout, flatAspect, eyeRegion, flatUv, hemisphere, clampZoom, ZOOM_MIN, ZOOM_MAX,
-  GestureTracker, remoteGrab, PokeDetector, panelLayout, PANEL_W, PANEL_H, LIST_SLOTS, SPEED_PRESETS, buttonAt,
+  GestureTracker, handInGesture, remoteGrab, PokeDetector, panelLayout, PANEL_W, PANEL_H, LIST_SLOTS, SPEED_PRESETS, buttonAt,
   seekFraction, formatTime, STEREOS, describeInputs, aimAngles, dragAngles,
   inGestureZone, LOW_VIEW_ANGLE, SwipeDetector, flickSeconds, skipLabel, DoublePinch, pinchedPanelStays, PANEL_LOOK_AWAY, PANEL_GRACE_MS,
   PANEL_IDLE_MS, placeInView, listFolder, parentDir, fisheye, packedAlphaAt, FISHEYE_FOV, PROJECTIONS, HandsTogether,
@@ -292,6 +292,27 @@ test('GestureTracker: two pinches give a spread ratio; the hand left pinching af
   assert.equal(t.update([hand(-0.4, 0.1, -0.4), null]), null); // and moving it moves nothing
   assert.equal(t.update([hand(-0.4, 0.1, -0.4, 0.1), null]), null); // it lets go
   assert.equal(t.update([hand(-0.4, 0.1, -0.4), null]).started, true); // a fresh pinch counts again
+});
+
+test('handInGesture: a hand that only rests with its thumb on its finger is in no gesture; a hand in a grab or a zoom is', () => {
+  const t = new GestureTracker(); // the player's own settings: 0.15 s of grace, then 2 cm before a grab starts
+  // A resting hand: pinched for 10 s, and it shakes 5 mm.
+  for (let ms = 0; ms <= 10_000; ms += 100) t.update([hand(0, -0.2, -0.4 + ((ms / 100) % 2) * 0.005), null], ms);
+  assert.equal(t.pinching[0], true, 'the fingers do touch');
+  assert.equal(handInGesture(t, 0), false, 'but the hand is not drawn');
+  assert.equal(handInGesture(t, 1), false);
+  // The same hand moves 5 cm with the pinch held: now it turns the picture.
+  t.update([hand(0.05, -0.2, -0.4), null], 10_100);
+  assert.equal(handInGesture(t, 0), true);
+  assert.equal(handInGesture(t, 1), false, 'the other hand does nothing');
+  // Both hands pinch: a zoom, and both are in it.
+  t.update([hand(0.05, -0.2, -0.4), hand(0.3, -0.2, -0.4)], 10_200);
+  assert.deepEqual([handInGesture(t, 0), handInGesture(t, 1)], [true, true]);
+  // One hand lets go: the hand left pinching after a zoom does nothing.
+  t.update([hand(0.05, -0.2, -0.4), hand(0.3, -0.2, -0.4, 0.1)], 10_300);
+  assert.deepEqual([handInGesture(t, 0), handInGesture(t, 1)], [false, false]);
+  t.update([null, null], 10_400);
+  assert.deepEqual([handInGesture(t, 0), handInGesture(t, 1)], [false, false]);
 });
 
 test('GestureTracker: hands that start almost touching do not give a huge ratio', () => {

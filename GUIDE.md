@@ -114,8 +114,8 @@ Raise your hand to about chin height to use it.
 
 A **pinch** is the tip of your thumb on the tip of your index finger.
 
-Your hands are drawn only while you use them: while you pinch, and while the menu is open. Otherwise they stay out
-of the picture. They look like smooth, see-through hands and glow orange while they pinch.
+Your hands are drawn only while you use them: while a hand turns, moves or zooms the picture, and while the menu is
+open. Otherwise they stay out of the picture. They look like smooth, see-through hands and glow orange while they pinch.
 
 | To do this | Do this |
 |---|---|
